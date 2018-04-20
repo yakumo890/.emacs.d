@@ -1,4 +1,4 @@
-;; $B=i$a$F(Binit.el$B$rFI$_9~$`A0$K$d$k$Y$-$3$H(B
+;; 初めてinit.elを読み込む前にやるべきこと
 ;; "git" nil nil nil "clone" "https://github.com/iRi-E/mozc-el-extensions" ".emacs.d/mozc-el-extensions"
 
 (setq default-directory "~/")
@@ -25,8 +25,8 @@
 
 (use-package magit)
 
-;;;$B%-!<%P%$%s%I(B
-;;C-c C-c$B$G(Bcomment-region, C-c C-;$B$G(Buncomment-region
+;;;キーバインド
+;;C-c C-cでcomment-region, C-c C-;でuncomment-region
 (global-set-key (kbd "\C-c C-c") 'comment-region)
 (add-hook 'python-mode-hook (lambda () (define-key python-mode-map (kbd "\C-c C-c") 'comment-region)))
 (global-set-key (kbd "\C-c C-;") 'uncomment-region)
@@ -34,15 +34,15 @@
 (keyboard-translate ?\C-h ?\C-?) ;backspace
 (global-set-key (kbd "M-h") 'backward-kill-word)
 
-(global-set-key "\M-[" 'forward-sexp) ;$BBP1~$9$k3+$-3g8L$X0\F0(B
-(global-set-key "\M-]" 'backward-sexp) ;$BBP1~$9$kJD$83g8L$X0\F0(B
+(global-set-key "\M-[" 'forward-sexp) ;対応する開き括弧へ移動
+(global-set-key "\M-]" 'backward-sexp) ;対応する閉じ括弧へ移動
 (global-set-key "\C-j" 'newline-and-indent)
 
-;;tab$BA^F~(B
+;;tab挿入
 (global-set-key "\C-t" '(lambda ()
 			  (interactive)
 			  (insert "\t")))
-;;$BJ8;z$NBg$-$5(B
+;;文字の大きさ
 (global-set-key [(control ?\+)] '(lambda ()
 				   (interactive)
 				   (text-scale-increase 1)))
@@ -51,10 +51,10 @@
 				   (text-scale-decrease 1)))
 
 (define-key global-map "\C-q" (make-sparse-keymap))
-;; quoted-insert $B$O(B C-q C-q $B$X3d$jEv$F(B
+;; quoted-insert は C-q C-q へ割り当て
 (global-set-key "\C-q\C-q" 'quoted-insert)
 
-;;;$B%^%&%9L58z2=(B
+;;;マウス無効化
 (global-unset-key [mouse-1])
 (global-unset-key [down-mouse-1])
 (global-unset-key [double-mouse-1])
@@ -156,34 +156,34 @@ With argument ARG, do this that many times."
 (global-set-key "\M-b" 'my-backward-word)
 (global-set-key (kbd "M-h") 'my-backward-delete-word)
 
-(toggle-scroll-bar -1) ;$B2#%9%/%m!<%k%P!<$rI=<($7$J$$(B
-(setq ring-bell-function 'ignore) ;$B%S!<%W2;$rL58z(B
-(setq backup-inhibited t) ;$B%P%C%/%"%C%W%U%!%$%k$r:n$i$J$$(B
-(setq inhibit-startup-message t) ;$B%;%C%H%"%C%W%a%C%;!<%8$rHsI=<((B
-(fset 'yes-or-no-p 'y-or-n-p) ;yes/no $B$NBe$o$j$K(B y/n
-(setq initial-scratch-message nil) ;scratch$B$K%a%C%;!<%8$rI=<($7$J$$(B
-(setq select-enable-clipboard t) ;Yank$B%P%C%U%!$H%/%j%C%W%\!<%I$NF14|(B
-(tool-bar-mode -1) ;$B%D!<%k%P!<$rHsI=<((B
-(menu-bar-mode -1) ;$B%a%K%e!<%P!<HsI=<((B
-(put 'upcase-region 'disabled nil) ;upcase$B;~$K%"%i!<%H$r=P$5$J$$(B
-(put 'downcase-region 'disabled nil) ;downcase$B;~$K%"%i!<%H$r=P$5$J$$(B
-(auto-image-file-mode t) ;$B2hA|%U%!%$%k$rI=<(2DG=$K(B
-(ffap-bindings) ;C-x C-f$B$r$a$A$c$a$A$cJXMx$K(B
+(toggle-scroll-bar -1) ;横スクロールバーを表示しない
+(setq ring-bell-function 'ignore) ;ビープ音を無効
+(setq backup-inhibited t) ;バックアップファイルを作らない
+(setq inhibit-startup-message t) ;セットアップメッセージを非表示
+(fset 'yes-or-no-p 'y-or-n-p) ;yes/no の代わりに y/n
+(setq initial-scratch-message nil) ;scratchにメッセージを表示しない
+(setq select-enable-clipboard t) ;Yankバッファとクリップボードの同期
+(tool-bar-mode -1) ;ツールバーを非表示
+(menu-bar-mode -1) ;メニューバー非表示
+(put 'upcase-region 'disabled nil) ;upcase時にアラートを出さない
+(put 'downcase-region 'disabled nil) ;downcase時にアラートを出さない
+(auto-image-file-mode t) ;画像ファイルを表示可能に
+(ffap-bindings) ;C-x C-fをめちゃめちゃ便利に
 (setq frame-title-format (format "emacs")) ;title
-(setq-default indicate-buffer-boundaries 'right) ;$B1&$K(BEOF$B$N0u$rI=<((B
+(setq-default indicate-buffer-boundaries 'right) ;右にEOFの印を表示
 
-;;$B%U%)%s%H$N@_Dj(B
+;;フォントの設定
 (set-face-attribute 'default nil
 		    :family "Ricty" ;; font
 		    :height 130)
 
-;;#!$B$,4^$^$l$k%U%!%$%k$K!"<B9T5v2D$rM?$($k(B
+;;#!が含まれるファイルに、実行許可を与える
 (add-hook 'after-save-hook
 	  'executable-make-buffer-file-executable-if-script-p)
 
 ;;;cua-mode
 (cua-mode t)
-(setq cua-enable-cua-keys nil) ;cua-mode$B$NJQ$J%-!<%P%$%s%IL58z(B
+(setq cua-enable-cua-keys nil) ;cua-modeの変なキーバインド無効
 
 (use-package tabbar
   :config
@@ -252,11 +252,11 @@ With argument ARG, do this that many times."
   (setq tabbar-buffer-list-function 'my-tabbar-buffer-list)
   (tabbar-mode))
 
-;;$BBP1~$9$k3g8L$r6/D4(B
+;;対応する括弧を強調
 (show-paren-mode t)
-(setq show-paren-delay 0) ;$B%O%$%i%$%H$^$G$NCY1d(B
-(setq show-paren-style 'expression) ;$B3g8LFb$r6/D4(B
-;;$BBP1~$9$k3g8L$^$G%"%s%@!<%i%$%s(B
+(setq show-paren-delay 0) ;ハイライトまでの遅延
+(setq show-paren-style 'expression) ;括弧内を強調
+;;対応する括弧までアンダーライン
 (set-face-attribute 'show-paren-match-face nil
 		    :background nil
 		    :foreground nil
@@ -271,29 +271,29 @@ With argument ARG, do this that many times."
 (if window-system
 	(progn
 	  (put 'modeline 'face-alias 'mode-line)
-	  (set-face-foreground 'modeline "white") ;$B%b!<%I%i%$%s$NJ8;z$N?'(B
-	  (set-face-background 'modeline "black") ;$B%b!<%I%i%$%s$NJ8;z$N?'(B
-	  (set-face-foreground 'region "DeepPink1") ;$B%j!<%8%g%s$NJ8;z$N?'(B
-	  (set-face-background 'region "LightSkyBlue") ;$B%j!<%8%g%s$NJ8;z$N?'(B
-	  (set-frame-parameter nil 'fullscreen 'maximized) ;$B5/F0;~:GBg2=(B
+	  (set-face-foreground 'modeline "white") ;モードラインの文字の色
+	  (set-face-background 'modeline "black") ;モードラインの文字の色
+	  (set-face-foreground 'region "DeepPink1") ;リージョンの文字の色
+	  (set-face-background 'region "LightSkyBlue") ;リージョンの文字の色
+	  (set-frame-parameter nil 'fullscreen 'maximized) ;起動時最大化
 
-	  ;;$B8=:_9T$r%O%$%i%$%H(B
+	  ;;現在行をハイライト
 	  (global-hl-line-mode t)
 	  (set-face-background 'hl-line "gray88")
 
-	  ;;$B%"%k%U%!CM(B
+	  ;;アルファ値
 	  (setq default-frame-alist
 			(append
 			 (list
 			  '(alpha . 95))
 			 default-frame-alist))))
 
-;;$B%b!<%I%i%$%s$N;~4VI=<((B
+;;モードラインの時間表示
 (setq display-time-string-forms
 	  '(month "/" day "(" dayname ") " 24-hours ":" minutes))
 (display-time)
 
-;;$B%b!<%I%i%$%s(B
+;;モードライン
 (setq-default mode-line-format
 	      '("w"
 		mode-line-frame-identification
@@ -380,7 +380,7 @@ With argument ARG, do this that many times."
 (global-set-key (kbd "C-q w") 'split-window-below)
 (global-set-key (kbd "C-q h") 'split-window-right)
 
-;$BF0E*$KF)2aN(JQ99(B
+;動的に透過率変更
 (defun set-alpha (alpha-num)
   "set frame parameter 'alpha"
   (interactive "nalpha: ")
@@ -407,11 +407,11 @@ With argument ARG, do this that many times."
    '(rainbow-delimiters-depth-8-face ((t (:foreground "tomato"))))
    '(rainbow-delimiters-depth-9-face ((t (:foreground "forest green"))))))
 
-;;$B9T?t$NI=<((B
+;;行数の表示
 (use-package linum
   :config
   (global-linum-mode 1)
-  (setq linum-format " %5d ") ;$B%U%)!<%^%C%H!##57eJ,$NNN0h$r3NJ](B
+  (setq linum-format " %5d ") ;フォーマット。５桁分の領域を確保
   (custom-set-faces '(linum ((t
 			      ( :inherit (shadow default)
 					 :foreground "black"
@@ -429,22 +429,22 @@ With argument ARG, do this that many times."
 
 (use-package whitespace
    :config
-  (setq whitespace-style '(face           ; face$B$G2D;k2=(B
-  			   trailing       ; $B9TKv(B
-  			   tabs           ; $B%?%V(B
-  			   spaces         ; $B%9%Z!<%9(B
-  			   empty          ; $B@hF,(B/$BKvHx$N6u9T(B
-  			   space-mark     ; $BI=<($N%^%C%T%s%0(B
+  (setq whitespace-style '(face           ; faceで可視化
+  			   trailing       ; 行末
+  			   tabs           ; タブ
+  			   spaces         ; スペース
+  			   empty          ; 先頭/末尾の空行
+  			   space-mark     ; 表示のマッピング
   			   tab-mark))
 
   (setq whitespace-display-mappings
   	'((space-mark ?\u3000 [?\u25a1])
   	  (tab-mark ?\t [?\u00BB ?\t] [?\\ ?\t])))
 
-  ;; $B%9%Z!<%9$OA43Q$N$_$r2D;k2=(B
+  ;; スペースは全角のみを可視化
   (setq whitespace-space-regexp "\\(\u3000+\\)")
 
-  ;; $BJ]B8A0$K<+F0$G%/%j!<%s%"%C%W(B
+  ;; 保存前に自動でクリーンアップ
   (setq whitespace-action '(auto-cleanup))
   (add-hook 'markdown-mode-hook
   	    '(lambda ()
@@ -554,7 +554,7 @@ With argument ARG, do this that many times."
     "Emulate `kill-line' in helm minibuffer"
     (kill-new (buffer-substring (point) (field-end))))
 
-					;find-file-at-point$B$N(Bui
+					;find-file-at-pointのui
   (add-to-list 'helm-completing-read-handlers-alist '(find-file-at-point . nil))
 
   (custom-set-variables
@@ -688,7 +688,7 @@ With argument ARG, do this that many times."
 
 (setq search-default-regexp-mode nil)
 
-;;$B@55,I=8=$r(BPython$BIw$K(B
+;;正規表現をPython風に
 (use-package visual-regexp)
 (use-package visual-regexp-steroids
    :config
@@ -716,7 +716,7 @@ With argument ARG, do this that many times."
 	(other-window 1)
 	(w3m-find-file html-file-name)))))
 
-(find-file "~/.emacs.d/init.el") ;emacs$B5/F0;~$K(Binit.el$B$r3+$/(B
+(find-file "~/.emacs.d/init.el") ;emacs起動時にinit.elを開く
 (put 'dired-find-alternate-file 'disabled nil)
 
 ;;xref
@@ -728,7 +728,7 @@ With argument ARG, do this that many times."
   (interactive)
   (byte-compile-file buffer-file-name t))
 
-;;el$B%U%!%$%k$rJ]B8$7$?;~$K%3%s%Q%$%k$9$k(B
+;;elファイルを保存した時にコンパイルする
 (add-hook 'after-save-hook (lambda ()
 			     (when (and (string= (file-name-extension buffer-file-name) "el") (not (string= (file-name-nondirectory buffer-file-name) "init.el")))
 			       (byte-compile-this-file)
@@ -746,10 +746,10 @@ With argument ARG, do this that many times."
 					   ("c++-glfw-release" . "clang++ --std=c++14 -O2 -Wall -o %file-sans %file-name `pkg-config glfw3 --libs --cflags`"))
 					)))
 
-;;compilation mode$B$N(Bwindow$B$N%5%$%:(B
+;;compilation modeのwindowのサイズ
   (setq compilation-window-height 15)
 
-;;compilation buffer$B$N(Bwindow$B$,$G$k0LCV$r2<$NJ}$K$9$k(B
+;;compilation bufferのwindowがでる位置を下の方にする
   (defun custom-compilation-buffer-window ()
     (when (not (get-buffer-window "*compilation*"))
       (save-selected-window
@@ -760,10 +760,10 @@ With argument ARG, do this that many times."
 	    (switch-to-buffer "*compilation*")
 	    (shrink-window (- h compilation-window-height)))))))
 
-;;compilation mode$B$G%3%s%Q%$%k$,@.8y$7$?$H$-$K%P%C%U%!$,>C$($k;~4V(B
+;;compilation modeでコンパイルが成功したときにバッファが消える時間
   (setq killing-compilation-buffer-time 1)
 
-;;compilation mode$B$G%3%s%Q%$%k$,@.8y$7$?$H$-$K(B*compilation*$B%P%C%U%!$r>C$9(B
+;;compilation modeでコンパイルが成功したときに*compilation*バッファを消す
   (defun bury-compile-buffer-if-successful (buffer string)
     "Bury a compilation buffer if succeeded without warnings "
     (if (and
@@ -785,7 +785,7 @@ With argument ARG, do this that many times."
 
   (setq multi-compile-completion-system 'helm)
 
-  ;;$B%3%s%Q%$%k$NA0$K%;!<%V$9$k(B
+  ;;コンパイルの前にセーブする
   (defun save-multi-compile-run ()
     (interactive)
     (save-buffer)
@@ -793,9 +793,9 @@ With argument ARG, do this that many times."
 
   (global-set-key (kbd "C-c c") 'save-multi-compile-run))
 
-(setq eshell-cmpl-ignore-case t) ;$BJd40;~$KBgJ8;z!">.J8;z$r6hJL$7$J$$(B
-(setq eshell-hist-ignoredups t) ;;$BMzNr$G=EJ#$rL5;k(B
-;;path$B$N@_Dj(B
+(setq eshell-cmpl-ignore-case t) ;補完時に大文字、小文字を区別しない
+(setq eshell-hist-ignoredups t) ;;履歴で重複を無視
+;;pathの設定
 (setq eshell-path-env (getenv "PATH"))
 
 ;;clear
@@ -812,21 +812,21 @@ With argument ARG, do this that many times."
 		(propertize (eshell/pwd) 'face `(:foreground "lime green"))
 		(propertize (if (= (user-uid) 0) "#" "$") 'face `(:foreground "lime green"))
 		(propertize " " 'face `(:foreground "black")))))
-(setq eshell-prompt-regexp "^[^#$]*[#$] ") ;prompt$B$N@hF,(B
+(setq eshell-prompt-regexp "^[^#$]*[#$] ") ;promptの先頭
 
-;;$B%-!<%P%$%s%I(B
-;;TODO:$B%W%m%s%W%H$N@hF,$G(BC-b$B$r2!2<$9$k$H%+!<%=%k$,?)$$9~$`(B
+;;キーバインド
+;;TODO:プロンプトの先頭でC-bを押下するとカーソルが食い込む
 (add-hook 'eshell-mode-hook
 	  '(lambda ()
 	     (progn
-	       (define-key eshell-mode-map "\C-a" 'eshell-bol) ;C-a$B$G%W%m%s%W%H$NA0$K0\F0(B
-	       ;;C-p,C-n$B$G%3%^%s%IMzNr%k!<%W(B
+	       (define-key eshell-mode-map "\C-a" 'eshell-bol) ;C-aでプロンプトの前に移動
+	       ;;C-p,C-nでコマンド履歴ループ
 	       (define-key eshell-mode-map "\C-p" 'eshell-previous-matching-input-from-input)
 	       (define-key eshell-mode-map "\C-n" 'eshell-next-matching-input-from-input)
 	       (define-key eshell-mode-map "\C-j" 'eshell-send-input)
 	       (define-key eshell-mode-map "\C-l" 'eshell-clear-buffer))))
 
-;;helm$B$r;HMQ$9$k(B
+;;helmを使用する
 (add-hook 'eshell-mode-hook
           #'(lambda ()
               (define-key eshell-mode-map
@@ -845,7 +845,7 @@ With argument ARG, do this that many times."
    '(shell-pop-shell-type (quote ("eshell" "*eshell*"
 				  (lambda nil (eshell shell-pop-term-shell)))))
    '(shell-pop-term-shell "/usr/bin/zsh")
-   '(shell-pop-universal-key "C-$") ;C-$$B$G(Bshell$B$N=P$7F~$l(B
+   '(shell-pop-universal-key "C-$") ;C-$でshellの出し入れ
    '(shell-pop-window-height 75)
    '(shell-pop-full-span t)
    '(shell-pop-window-position "top")))
@@ -854,7 +854,7 @@ With argument ARG, do this that many times."
 (use-package mozc-im
   :config
   (setq default-input-method "japanese-mozc-im")
-  ;; mozc-cursor-color $B$rMxMQ$9$k$?$a$NBP:v(B
+  ;; mozc-cursor-color を利用するための対策
   (make-variable-buffer-local 'mozc-im-mode)
   (add-hook 'mozc-im-activate-hook (lambda () (setq mozc-im-mode t)))
   (add-hook 'mozc-im-deactivate-hook (lambda () (setq mozc-im-mode nil)))
@@ -863,10 +863,10 @@ With argument ARG, do this that many times."
 			(let ((mozc-mode mozc-im-mode))
 			  (apply orig-fun args))))
 
-  ;; helm $B$G%_%K%P%C%U%!$NF~NO;~$K(B IME $B$N>uBV$r7Q>5$7$J$$(B
+  ;; helm でミニバッファの入力時に IME の状態を継承しない
   (setq helm-inherit-input-method nil)
 
-  ;; helm $B$N8!:w%Q%?!<%s$r(B mozc $B$r;H$C$FF~NO$9$k>l9g!"F~NOCf$O(B helm $B$N8uJd$N99?7$rDd;_$9$k(B
+  ;; helm の検索パターンを mozc を使って入力する場合、入力中は helm の候補の更新を停止する
   (advice-add 'mozc-candidate-dispatch
 	      :before (lambda (&rest args)
 			(when helm-alive-p
@@ -880,7 +880,7 @@ With argument ARG, do this that many times."
 			     (when helm-suspend-update-flag
 			       (setq helm-suspend-update-flag nil)))))))
 
-  ;; helm $B$G8uJd$N%"%/%7%g%s$rI=<($9$k:]$K(B IME $B$r(B OFF $B$K$9$k(B
+  ;; helm で候補のアクションを表示する際に IME を OFF にする
   (advice-add 'helm-select-action
 	      :before (lambda (&rest args)
 			(deactivate-input-method)))
@@ -888,13 +888,13 @@ With argument ARG, do this that many times."
 
 (use-package mozc-popup
   :config
-  ;; popup$B%9%?%$%k(B $B$r;HMQ$9$k(B
+  ;; popupスタイル を使用する
   (setq mozc-candidate-style 'popup))
 
 (add-to-list 'load-path "~/.emacs.d/mozc-el-extensions")
 (use-package mozc-cursor-color
   :config
-  ;; $B%+!<%=%k%+%i!<$r@_Dj$9$k(B
+  ;; カーソルカラーを設定する
   (setq mozc-cursor-color-alist '((direct        . "green")
 				  (read-only     . "red")
 				  (hiragana      . "blue")
@@ -903,11 +903,11 @@ With argument ARG, do this that many times."
 				  (full-ascii    . "orchid")
 				  (half-katakana . "gold")))
 
-  ;; $B%+!<%=%k$NE@LG$r(B OFF $B$K$9$k(B
+  ;; カーソルの点滅を OFF にする
   (blink-cursor-mode 0))
 
 (defadvice cua-sequence-rectangle (around my-cua-sequence-rectangle activate)
-  "$BO"HV$rA^F~$9$k$H$-!";g$N$H$3$m$NJ8;z$r>e=q$-$7$J$$$G:8$K$:$i$9(B"
+  "連番を挿入するとき、紫のところの文字を上書きしないで左にずらす"
   (interactive
    (list (if current-prefix-arg
              (prefix-numeric-value current-prefix-arg)
