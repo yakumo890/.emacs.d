@@ -275,11 +275,20 @@ With argument ARG, do this that many times."
 	  (set-face-background 'modeline "black") ;モードラインの文字の色
 	  (set-face-foreground 'region "DeepPink1") ;リージョンの文字の色
 	  (set-face-background 'region "LightSkyBlue") ;リージョンの文字の色
-	  (set-frame-parameter nil 'fullscreen 'maximized) ;起動時最大化
+	  ;(set-frame-parameter nil 'fullscreen 'maximized) ;起動時最大化
 
 	  ;;現在行をハイライト
 	  (global-hl-line-mode t)
 	  (set-face-background 'hl-line "gray88")
+
+	  ;;ウィンドウサイズ
+	  (setq initial-frame-alist
+		(append (list
+			 '(top . 100)
+			 '(left . 160)
+			 '(width . 88)
+			 '(height . 42))
+			initial-frame-alist))
 
 	  ;;アルファ値
 	  (setq default-frame-alist
@@ -677,7 +686,9 @@ With argument ARG, do this that many times."
 
 (use-package migemo
   :config
-  (setq migemo-dictionary "/usr/share/migemo/utf-8/migemo-dict")
+  (if (file-exists-p "/usr/share/cmigemo/")
+      (setq migemo-dictionary "/usr/share/cmigemo/utf-8/migemo-dict")
+    (setq migemo-dictionary "/usr/share/migemo/utf-8/migemo-dict"))
   (setq migemo-command "cmigemo")
   (setq migemo-options '("-q" "--emacs"))
   (setq migemo-user-dictionary nil)
