@@ -15,7 +15,7 @@
   '(use-package helm tabbar mozc mozc-im mozc-popup ace-isearch company dired-toggle hlinum avy
 	 migemo helm-swoop helm-company image+ image-dired+ irony markdown-mode helm-xref
 	 multi-compile px rainbow-mode rainbow-delimiters restart-emacs shell-pop magit
-	 undo-tree visual-regexp visual-regexp-steroids window-numbering yasnippet yasnippet-snippets))
+	 undo-tree visual-regexp visual-regexp-steroids window-numbering yasnippet yasnippet-snippets helm-c-yasnippet))
 (dolist (pac request-packages)
   (unless (package-installed-p pac)
     (package-install pac)))
@@ -697,9 +697,12 @@ With argument ARG, do this that many times."
 
 (use-package migemo
   :config
-  (if (file-exists-p "/usr/share/cmigemo/")
-      (setq migemo-dictionary "/usr/share/cmigemo/utf-8/migemo-dict")
-    (setq migemo-dictionary "/usr/share/migemo/utf-8/migemo-dict"))
+  (cond ((file-exists-p "/usr/share/cmigemo/")
+	 (setq migemo-dictionary "/usr/share/cmigemo/utf-8/migemo-dict"))
+	((file-exists-p "C:/Users/yakumo/.emacs.d/conf/migemo")
+	 (setq migemo-dictionary "C:/Users/yakumo/.emacs.d/conf/migemo/dict/utf-8/migemo-dict"))
+	(t
+	  (setq migemo-dictionary "/usr/share/migemo/utf-8/migemo-dict")))
   (setq migemo-command "cmigemo")
   (setq migemo-options '("-q" "--emacs"))
   (setq migemo-user-dictionary nil)
