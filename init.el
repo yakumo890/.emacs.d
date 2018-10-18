@@ -29,6 +29,7 @@
 ;;C-c C-cでcomment-region, C-c C-;でuncomment-region
 (global-set-key (kbd "\C-c C-c") 'comment-region)
 (add-hook 'python-mode-hook (lambda () (define-key python-mode-map (kbd "\C-c C-c") 'comment-region)))
+(add-hook 'latex-mode-hook (lambda () (define-key latex-mode-map (kbd "\C-c C-c") 'comment-region)))
 (global-set-key (kbd "\C-c C-;") 'uncomment-region)
 
 (keyboard-translate ?\C-h ?\C-?) ;backspace
@@ -172,10 +173,15 @@ With argument ARG, do this that many times."
 (setq frame-title-format (format "emacs")) ;title
 (setq-default indicate-buffer-boundaries 'right) ;右にEOFの印を表示
 
+(add-to-list 'auto-mode-alist '("\\.tex\\'" . latex-mode)) ;.texをlatex-modeで開く
+
 ;;フォントの設定
 (set-face-attribute 'default nil
 		    :family "Ricty" ;; font
 		    :height 130)
+(set-fontset-font
+ nil 'japanese-jisx0208
+ (font-spec :family "Ricty"))
 
 ;;#!が含まれるファイルに、実行許可を与える
 (add-hook 'after-save-hook
@@ -586,12 +592,17 @@ With argument ARG, do this that many times."
   :config
   (yas-global-mode)
   (define-key yas-minor-mode-map (kbd "C-'") 'yas/expand)
-  (define-key yas-minor-mode-map "\r" nil))
+  (define-key yas-minor-mode-map "\r" nil)
+  (use-package helm-c-yasnippet
+    :config
+    (setq helm-yas-space-match-any-greedy t)
+    (global-set-key (kbd "C-c y") 'helm-yas-complete)
+    (push '("emacs.+/snippets/" . snippet-mode) auto-mode-alist)))
 
 (use-package company
   :config
   (setq company-idle-delay 0)
-  (setq company-minimum-prefix-length 1)
+  (setq company-minimum-prefix-length 2)
   (setq company-selection-wrap-around t)
 
   (define-key company-active-map (kbd "M-n") nil)
@@ -703,7 +714,7 @@ With argument ARG, do this that many times."
 (use-package visual-regexp)
 (use-package visual-regexp-steroids
    :config
-   (define-key global-map (kbd "C-@") 'vr/replace))
+   (define-key global-map (kbd "C-@") 'vr/query-replace))
 
 (use-package ace-isearch
   :config
@@ -755,7 +766,12 @@ With argument ARG, do this that many times."
 			      (c++-mode . (("c++-release" . "clang++ --std=c++14 -O2 -Wall -o %file-sans %file-name")
 					   ("c++-cv-release" . "clang++ --std=c++14 -O2 -Wall -o %file-sans %file-name `pkg-config opencv --libs --cflags`")
 					   ("c++-glfw-release" . "clang++ --std=c++14 -O2 -Wall -o %file-sans %file-name `pkg-config glfw3 --libs --cflags`"))
-					)))
+					)
+			      (latex-mode . (("platex" . "platex %file-name")
+					     ("rake" . "rake"))
+					  )
+			      ;("\\.dot\\'" . (("dot" . "dot -Teps %file-name -o %file-sans.eps")))
+			      ))
 
 ;;compilation modeのwindowのサイズ
   (setq compilation-window-height 15)
@@ -936,3 +952,43 @@ With argument ARG, do this that many times."
          (insert (format format first))
          (yank)
          (setq first (+ first incr)))))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(helm-mini-default-sources
+   (quote
+    (helm-source-buffers-list helm-source-files-in-current-dir helm-source-emacs-commands-history helm-source-emacs-commands)))
+ '(package-selected-packages
+   (quote
+    (helm-c-yasnippet graphviz-dot-mode yaml-mode yasnippet-snippets window-numbering visual-regexp-steroids use-package undo-tree tabbar shell-pop restart-emacs rainbow-mode rainbow-delimiters px multi-compile mozc-popup mozc-im migemo markdown-mode magit irony image-dired+ image+ hlinum helm-xref helm-swoop helm-company dired-toggle avy ace-isearch)))
+ '(shell-pop-full-span t)
+ '(shell-pop-shell-type
+   (quote
+    ("eshell" "*eshell*"
+     (lambda nil
+       (eshell shell-pop-term-shell)))))
+ '(shell-pop-term-shell "/usr/bin/zsh")
+ '(shell-pop-universal-key "C-$")
+ '(shell-pop-window-position "top")
+ '(shell-pop-window-size 75))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(completions-common-part ((t (:inherit default :foreground "red"))))
+ '(diredp-compressed-file-suffix ((t (:foreground "#7b68ee"))))
+ '(diredp-ignored-file-name ((t (:foreground "#aaaaaa"))))
+ '(linum ((t (:inherit (shadow default) :foreground "black" :background "white" :height 130))))
+ '(linum-highlight-face ((t (:foreground "black" :background "yellow" :underline nil :height 130))))
+ '(rainbow-delimiters-depth-1-face ((t (:foreground "blue"))))
+ '(rainbow-delimiters-depth-2-face ((t (:foreground "dark orange"))))
+ '(rainbow-delimiters-depth-3-face ((t (:foreground "DeepPink3"))))
+ '(rainbow-delimiters-depth-4-face ((t (:foreground "DeepSkyBlue"))))
+ '(rainbow-delimiters-depth-5-face ((t (:foreground "DarkMagenta"))))
+ '(rainbow-delimiters-depth-6-face ((t (:foreground "LimeGreen"))))
+ '(rainbow-delimiters-depth-7-face ((t (:foreground "yellow3"))))
+ '(rainbow-delimiters-depth-8-face ((t (:foreground "tomato"))))
+ '(rainbow-delimiters-depth-9-face ((t (:foreground "forest green")))))
