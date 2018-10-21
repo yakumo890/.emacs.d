@@ -177,11 +177,11 @@ With argument ARG, do this that many times."
 
 ;;フォントの設定
 (set-face-attribute 'default nil
-		    :family "Ricty" ;; font
+		    :family "Ricty Diminished" ;; font
 		    :height 130)
 (set-fontset-font
  nil 'japanese-jisx0208
- (font-spec :family "Ricty"))
+ (font-spec :family "Ricty Diminished"))
 
 ;;#!が含まれるファイルに、実行許可を与える
 (add-hook 'after-save-hook
