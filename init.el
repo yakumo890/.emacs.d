@@ -197,7 +197,9 @@ With argument ARG, do this that many times."
   (setq tabbar-separator '(0.2))
 
   (global-set-key (kbd "<C-tab>") 'tabbar-forward-tab)
-  (global-set-key (kbd "<C-iso-lefttab>") 'tabbar-backward-tab)
+  (if (eq system-type 'windows-nt)
+      (global-set-key (kbd "<C-S-tab>") 'tabbar-backward-tab)
+    (global-set-key (kbd "<C-iso-lefttab>") 'tabbar-backward-tab))
 
   (set-face-attribute
    'tabbar-default nil
