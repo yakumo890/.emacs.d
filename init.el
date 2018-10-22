@@ -699,8 +699,8 @@ With argument ARG, do this that many times."
   :config
   (cond ((file-exists-p "/usr/share/cmigemo/")
 	 (setq migemo-dictionary "/usr/share/cmigemo/utf-8/migemo-dict"))
-	((file-exists-p "C:/Users/yakumo/.emacs.d/conf/migemo")
-	 (setq migemo-dictionary "C:/Users/yakumo/.emacs.d/conf/migemo/dict/utf-8/migemo-dict"))
+	((file-exists-p "~/.emacs.d/conf/migemo")
+	 (setq migemo-dictionary "~/.emacs.d/conf/migemo/dict/utf-8/migemo-dict"))
 	(t
 	  (setq migemo-dictionary "/usr/share/migemo/utf-8/migemo-dict")))
   (setq migemo-command "cmigemo")
