@@ -23,7 +23,12 @@
 (unless (require 'use-package nil t)
   (defmacro use-package (&rest args)))
 
-(use-package magit)
+(use-package magit
+  :config
+  (global-set-key (kbd "\C-x m") (make-sparse-keymap))
+  (global-set-key (kbd "\C-x m s") 'magit-status)
+  (global-set-key (kbd "\C-x m +") 'magit-stage-file)
+  (global-set-key (kbd "\C-x m c") 'magit-commit))
 
 ;;;キーバインド
 ;;C-c C-cでcomment-region, C-c C-;でuncomment-region
@@ -533,7 +538,9 @@ With argument ARG, do this that many times."
 		   (name . "^\\*Compile-Log\\*$")
 		   (name . "^\\*backtrace\\*$")))
 	 ("helm" (or
-		  (name . "^\\*helm.+\\*$"))))))
+		  (name . "^\\*helm.+\\*$")))
+	 ("magit" (or
+		   (name . "^magit.+$"))))))
 
 (add-hook 'ibuffer-mode-hook '(lambda () (ibuffer-switch-to-saved-filter-groups "default")))
 
@@ -823,6 +830,12 @@ With argument ARG, do this that many times."
 
   (global-set-key (kbd "C-c c") 'save-multi-compile-run))
 
+;;スタイル設定
+(add-hook 'c-mode-hook
+          '(lambda()
+             (c-set-style "stroustrup")
+             ))
+
 (setq eshell-cmpl-ignore-case t) ;補完時に大文字、小文字を区別しない
 (setq eshell-hist-ignoredups t) ;;履歴で重複を無視
 ;;pathの設定
@@ -855,6 +868,13 @@ With argument ARG, do this that many times."
 	       (define-key eshell-mode-map "\C-n" 'eshell-next-matching-input-from-input)
 	       (define-key eshell-mode-map "\C-j" 'eshell-send-input)
 	       (define-key eshell-mode-map "\C-l" 'eshell-clear-buffer))))
+
+(setq eshell-command-aliases-list
+      (append
+       (list
+        (list "ll" "ls -l")
+        (list "la" "ls -a")
+        (list "cat" "find-file $1"))))
 
 ;;helmを使用する
 (add-hook 'eshell-mode-hook
@@ -965,7 +985,7 @@ With argument ARG, do this that many times."
     (helm-source-buffers-list helm-source-files-in-current-dir helm-source-emacs-commands-history helm-source-emacs-commands)))
  '(package-selected-packages
    (quote
-    (helm-c-yasnippet graphviz-dot-mode yaml-mode yasnippet-snippets window-numbering visual-regexp-steroids use-package undo-tree tabbar shell-pop restart-emacs rainbow-mode rainbow-delimiters px multi-compile mozc-popup mozc-im migemo markdown-mode magit irony image-dired+ image+ hlinum helm-xref helm-swoop helm-company dired-toggle avy ace-isearch)))
+    (yasnippet-snippets yaml-mode window-numbering visual-regexp-steroids use-package undo-tree tabbar shell-pop restart-emacs rainbow-mode rainbow-delimiters px multi-compile mozc-popup mozc-im migemo markdown-mode magit irony image-dired+ image+ hlinum helm-xref helm-swoop helm-company helm-c-yasnippet graphviz-dot-mode dired-toggle avy ace-isearch)))
  '(shell-pop-full-span t)
  '(shell-pop-shell-type
    (quote
