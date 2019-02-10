@@ -202,7 +202,9 @@ With argument ARG, do this that many times."
   (setq tabbar-separator '(0.2))
 
   (global-set-key (kbd "<C-tab>") 'tabbar-forward-tab)
-  (global-set-key (kbd "<C-iso-lefttab>") 'tabbar-backward-tab)
+  (if (eq system-type 'windows-nt)
+      (global-set-key (kbd "<C-S-tab>") 'tabbar-backward-tab)
+    (global-set-key (kbd "<C-iso-lefttab>") 'tabbar-backward-tab))
 
   (set-face-attribute
    'tabbar-default nil
@@ -706,8 +708,8 @@ With argument ARG, do this that many times."
   :config
   (cond ((file-exists-p "/usr/share/cmigemo/")
 	 (setq migemo-dictionary "/usr/share/cmigemo/utf-8/migemo-dict"))
-	((file-exists-p "C:/Users/yakumo/.emacs.d/conf/migemo")
-	 (setq migemo-dictionary "C:/Users/yakumo/.emacs.d/conf/migemo/dict/utf-8/migemo-dict"))
+	((file-exists-p "~/.emacs.d/conf/migemo")
+	 (setq migemo-dictionary "~/.emacs.d/conf/migemo/dict/utf-8/migemo-dict"))
 	(t
 	  (setq migemo-dictionary "/usr/share/migemo/utf-8/migemo-dict")))
   (setq migemo-command "cmigemo")
