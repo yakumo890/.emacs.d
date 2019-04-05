@@ -183,7 +183,7 @@ With argument ARG, do this that many times."
 ;;フォントの設定
 (set-face-attribute 'default nil
 		    :family "Ricty Diminished" ;; font
-		    :height 130)
+		    :height 140)
 (set-fontset-font
  nil 'japanese-jisx0208
  (font-spec :family "Ricty Diminished"))
@@ -261,6 +261,36 @@ With argument ARG, do this that many times."
       (if (memq cur-buf tabs)
 	  tabs
 	(cons cur-buf tabs))))
+  (require 'cl)
+
+  (defun move-current-tab-to (move-func)
+    "Move current tab to orientation that indicated by move-func."
+    "if move-func is \"1+\", move to next. if move-func is \"1-\", move to privious"
+    (let* ((bufset (tabbar-current-tabset t))
+	   (bufs (tabbar-tabs bufset))
+	   (current-buf-num 0)
+	   (temp-buf-num 0)
+	   (num-of-tab (safe-length bufs)))
+      ;; 現在のバッファと一致するものを探して先頭へ
+      (dolist (buf bufs)
+	(if (string= (buffer-name) (format "%s" (car buf)))
+	    (setq current-buf-num temp-buf-num)
+	  (setq temp-buf-num (1+ temp-buf-num))))
+      (rotatef (nth current-buf-num bufs) (nth (% (+ (funcall move-func current-buf-num) num-of-tab) num-of-tab) bufs))
+      ;; タブバー書き換え
+      (tabbar-set-template bufset nil)
+      (tabbar-display-update)))
+
+  (defun move-current-tab-to-next ()
+    (interactive)
+    (move-current-tab-to #'1+))
+
+  (defun move-current-tab-to-previous ()
+    (interactive)
+    (move-current-tab-to #'1-))
+
+  (global-set-key [(control \>)] 'move-current-tab-to-next)
+  (global-set-key [(control \<)] 'move-current-tab-to-previous)
 
   (setq tabbar-buffer-list-function 'my-tabbar-buffer-list)
   (tabbar-mode))
@@ -316,6 +346,12 @@ With argument ARG, do this that many times."
 (display-time)
 
 ;;モードライン
+(setq total-lines 0)
+(use-package total-lines
+  :config
+  (global-total-lines-mode t)
+  )
+
 (setq-default mode-line-format
 	      '("w"
 		mode-line-frame-identification
@@ -329,6 +365,10 @@ With argument ARG, do this that many times."
 		"] "
 		"%[(L:%l C:%c B:"
 		(-3 . "%p")
+		" T:"
+		(:eval (format "%d" (- total-lines 1)))
+		" S:"
+		(:eval (format "%d" (if (boundp 'text-scale-mode-amount) text-scale-mode-amount 0)))
 		")%] "
 		(which-func-mode ("" which-func-format "-"))
 		global-mode-string))
@@ -987,7 +1027,7 @@ With argument ARG, do this that many times."
     (helm-source-buffers-list helm-source-files-in-current-dir helm-source-emacs-commands-history helm-source-emacs-commands)))
  '(package-selected-packages
    (quote
-    (yasnippet-snippets yaml-mode window-numbering visual-regexp-steroids use-package undo-tree tabbar shell-pop restart-emacs rainbow-mode rainbow-delimiters px multi-compile mozc-popup mozc-im migemo markdown-mode magit irony image-dired+ image+ hlinum helm-xref helm-swoop helm-company helm-c-yasnippet graphviz-dot-mode dired-toggle avy ace-isearch)))
+    (total-lines yasnippet-snippets yaml-mode window-numbering visual-regexp-steroids use-package undo-tree tabbar shell-pop restart-emacs rainbow-mode rainbow-delimiters px multi-compile mozc-popup mozc-im migemo markdown-mode magit irony image-dired+ image+ hlinum helm-xref helm-swoop helm-company helm-c-yasnippet graphviz-dot-mode dired-toggle avy ace-isearch)))
  '(shell-pop-full-span t)
  '(shell-pop-shell-type
    (quote
