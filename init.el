@@ -261,9 +261,9 @@ With argument ARG, do this that many times."
       (if (memq cur-buf tabs)
 	  tabs
 	(cons cur-buf tabs))))
-  (require 'cl)
 
-  (defun move-current-tab-to (move-func)
+  (require 'cl)
+  (defun tabbar-move-current-tab-to (move-func)
     "Move current tab to orientation that indicated by move-func."
     "if move-func is \"1+\", move to next. if move-func is \"1-\", move to privious"
     (let* ((bufset (tabbar-current-tabset t))
@@ -281,16 +281,16 @@ With argument ARG, do this that many times."
       (tabbar-set-template bufset nil)
       (tabbar-display-update)))
 
-  (defun move-current-tab-to-next ()
+  (defun tabbar-move-current-tab-to-next ()
     (interactive)
-    (move-current-tab-to #'1+))
+    (tabbar-move-current-tab-to #'1+))
 
-  (defun move-current-tab-to-previous ()
+  (defun tabbar-move-current-tab-to-previous ()
     (interactive)
-    (move-current-tab-to #'1-))
+    (tabbar-move-current-tab-to #'1-))
 
-  (global-set-key [(control \>)] 'move-current-tab-to-next)
-  (global-set-key [(control \<)] 'move-current-tab-to-previous)
+  (global-set-key [(control \>)] 'tabbar-move-current-tab-to-next)
+  (global-set-key [(control \<)] 'tabbar-move-current-tab-to-previous)
 
   (setq tabbar-buffer-list-function 'my-tabbar-buffer-list)
   (tabbar-mode))
