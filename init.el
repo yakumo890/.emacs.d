@@ -183,7 +183,7 @@ With argument ARG, do this that many times."
 ;;フォントの設定
 (set-face-attribute 'default nil
 		    :family "Ricty Diminished" ;; font
-		    :height 140)
+		    :height 160)
 (set-fontset-font
  nil 'japanese-jisx0208
  (font-spec :family "Ricty Diminished"))
@@ -300,7 +300,7 @@ With argument ARG, do this that many times."
 (setq show-paren-delay 0) ;ハイライトまでの遅延
 (setq show-paren-style 'expression) ;括弧内を強調
 ;;対応する括弧までアンダーライン
-(set-face-attribute 'show-paren-match-face nil
+(set-face-attribute 'show-paren-match nil
 		    :background nil
 		    :foreground nil
 		    :underline "red"
@@ -478,7 +478,7 @@ With argument ARG, do this that many times."
 			      ( :inherit (shadow default)
 					 :foreground "black"
 					 :background "white"
-					 :height 130))))))
+					 :height 160))))))
 
 (use-package hlinum
   :config
@@ -487,7 +487,7 @@ With argument ARG, do this that many times."
 					     (:foreground "black"
 							  :background "yellow"
 							  :underline nil
-							  :height 130))))))
+							  :height 160))))))
 
 (use-package whitespace
    :config
@@ -1017,43 +1017,3 @@ With argument ARG, do this that many times."
          (insert (format format first))
          (yank)
          (setq first (+ first incr)))))
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(helm-mini-default-sources
-   (quote
-    (helm-source-buffers-list helm-source-files-in-current-dir helm-source-emacs-commands-history helm-source-emacs-commands)))
- '(package-selected-packages
-   (quote
-    (total-lines yasnippet-snippets yaml-mode window-numbering visual-regexp-steroids use-package undo-tree tabbar shell-pop restart-emacs rainbow-mode rainbow-delimiters px multi-compile mozc-popup mozc-im migemo markdown-mode magit irony image-dired+ image+ hlinum helm-xref helm-swoop helm-company helm-c-yasnippet graphviz-dot-mode dired-toggle avy ace-isearch)))
- '(shell-pop-full-span t)
- '(shell-pop-shell-type
-   (quote
-    ("eshell" "*eshell*"
-     (lambda nil
-       (eshell shell-pop-term-shell)))))
- '(shell-pop-term-shell "/usr/bin/zsh")
- '(shell-pop-universal-key "C-$")
- '(shell-pop-window-position "top")
- '(shell-pop-window-size 75))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(completions-common-part ((t (:inherit default :foreground "red"))))
- '(diredp-compressed-file-suffix ((t (:foreground "#7b68ee"))))
- '(diredp-ignored-file-name ((t (:foreground "#aaaaaa"))))
- '(linum ((t (:inherit (shadow default) :foreground "black" :background "white" :height 130))))
- '(linum-highlight-face ((t (:foreground "black" :background "yellow" :underline nil :height 130))))
- '(rainbow-delimiters-depth-1-face ((t (:foreground "blue"))))
- '(rainbow-delimiters-depth-2-face ((t (:foreground "dark orange"))))
- '(rainbow-delimiters-depth-3-face ((t (:foreground "DeepPink3"))))
- '(rainbow-delimiters-depth-4-face ((t (:foreground "DeepSkyBlue"))))
- '(rainbow-delimiters-depth-5-face ((t (:foreground "DarkMagenta"))))
- '(rainbow-delimiters-depth-6-face ((t (:foreground "LimeGreen"))))
- '(rainbow-delimiters-depth-7-face ((t (:foreground "yellow3"))))
- '(rainbow-delimiters-depth-8-face ((t (:foreground "tomato"))))
- '(rainbow-delimiters-depth-9-face ((t (:foreground "forest green")))))
