@@ -1,5 +1,5 @@
 ;; 初めてinit.elを読み込む前にやるべきこと
-;; "git" nil nil nil "clone" "https://github.com/iRi-E/mozc-el-extensions" ".emacs.d/mozc-el-extensions"
+;; git clone https://github.com/iRi-E/mozc-el-extensions ~/.emacs.d/mozc-el-extensions
 
 (setq default-directory "~/")
 (setq command-line-default-directory "~/")
@@ -78,6 +78,28 @@
 (global-unset-key [\S-down-mouse-3])
 (global-unset-key [\C-down-mouse-3])
 (global-unset-key [\M-mouse-3])
+
+;;latex-mode
+(defun insert-serif (name)
+    (cond ((string= name "P") (insert "\\iP「」"))
+	  ((string= name "NM") (insert "\\iNM「」"))
+	  (t (error "aaa can take \"P\" or \"NM\""))
+	  ))
+
+(defun insert-serif-P ()
+  (interactive)
+  (insert-serif "P")
+  (backward-char))
+
+(defun insert-serif-NM ()
+  (interactive)
+  (insert-serif "NM")
+  (backward-char))
+
+(add-hook 'latex-mode-hook (lambda () (define-key latex-mode-map (kbd "\C-c p") 'insert-serif-P)))
+(add-hook 'latex-mode-hook (lambda () (define-key latex-mode-map (kbd "\C-c n") 'insert-serif-NM)))
+
+(add-hook 'latex-mode-hook (lambda () (define-key latex-mode-map (kbd "C-j") 'newline)))
 
 ;;;http://stackoverflow.com/questions/1771102/changing-emacs-forward-word-behaviour
 (defun my-syntax-class (char)
@@ -179,6 +201,8 @@ With argument ARG, do this that many times."
 (setq-default indicate-buffer-boundaries 'right) ;右にEOFの印を表示
 
 (add-to-list 'auto-mode-alist '("\\.tex\\'" . latex-mode)) ;.texをlatex-modeで開く
+
+(find-file "~/.emacs.d/init.el") ;emacs起動時にinit.elを開く
 
 ;;フォントの設定
 (set-face-attribute 'default nil
@@ -348,6 +372,7 @@ With argument ARG, do this that many times."
 ;;モードライン
 (setq total-lines 0)
 (use-package total-lines
+  :if (locate-library "total-lines")
   :config
   (global-total-lines-mode t)
   )
@@ -726,6 +751,7 @@ With argument ARG, do this that many times."
 		      :matchers ("begin" "$1" "$" "$$" "\\(" "\\["))))
 
 (define-key dired-mode-map "r" 'revert-buffer)
+(define-key dired-mode-map "\C-j" 'dired-find-file)
 
 ;;org
 (define-key org-mode-map (kbd "C-m") 'org-return-indent)
@@ -738,9 +764,11 @@ With argument ARG, do this that many times."
 (use-package dired-toggle
   :config
   (setq dired-toggle-window-size 48)
-  (define-key dired-mode-map (kbd "C-j") 'dired-toggle-action-find-file))
+;;(define-key dired-mode-map (kbd "C-j") 'dired-toggle-action-find-file)
+  )
 
 (use-package dired-details
+  :if (locate-library "dired-details")
   :config
   (dired-details-install))
 
@@ -790,7 +818,6 @@ With argument ARG, do this that many times."
 	(other-window 1)
 	(w3m-find-file html-file-name)))))
 
-(find-file "~/.emacs.d/init.el") ;emacs起動時にinit.elを開く
 (put 'dired-find-alternate-file 'disabled nil)
 
 ;;xref
@@ -878,6 +905,11 @@ With argument ARG, do this that many times."
              (c-set-style "stroustrup")
              ))
 
+(when (file-exists-p "~/.emacs.d/wd.el") (load "~/.emacs.d/wd.el"))
+
+;;emacs起動時にワーキングディレクトリのdiredを起動
+(dired (getenv "wd"))
+
 (setq eshell-cmpl-ignore-case t) ;補完時に大文字、小文字を区別しない
 (setq eshell-hist-ignoredups t) ;;履歴で重複を無視
 ;;pathの設定
@@ -911,12 +943,19 @@ With argument ARG, do this that many times."
 	       (define-key eshell-mode-map "\C-j" 'eshell-send-input)
 	       (define-key eshell-mode-map "\C-l" 'eshell-clear-buffer))))
 
+(defun catenate (file)
+  (interactive "Ffile: ")
+  (let ((tfile (file-truename file)))
+    (kill-current-buffer)
+    (find-file tfile)))
+
 (setq eshell-command-aliases-list
       (append
        (list
         (list "ll" "ls -l")
         (list "la" "ls -a")
-        (list "cat" "find-file $1"))))
+	(list "c" "cd $wd")
+        (list "cat" "catenate $1 > /dev/null"))))
 
 ;;helmを使用する
 (add-hook 'eshell-mode-hook
