@@ -1,417 +1,18 @@
-;; 初めてinit.elを読み込む前にやるべきこと
-;; git clone https://github.com/iRi-E/mozc-el-extensions ~/.emacs.d/mozc-el-extensions
-
-(setq default-directory "~/")
-(setq command-line-default-directory "~/")
-
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/"))
-(add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
+;;====================================================================================
+;; package setting
+;;====================================================================================
+(setq-default package-archives
+              '(("melpa" . "https://melpa.org/packages/")
+                ("org" . "https://orgmode.org/elpa/")
+                ("gnu" . "http://elpa.gnu.org/packages/")))
 (package-initialize)
-(package-refresh-contents)
+(unless (package-installed-p 'leaf)
+  (package-refresh-contents)
+  (package-install 'leaf))
 
-(defvar request-packages
-  '(use-package helm tabbar mozc mozc-im mozc-popup ace-isearch company dired-toggle hlinum avy
-	 migemo helm-swoop helm-company image+ image-dired+ irony markdown-mode helm-xref
-	 multi-compile px rainbow-mode rainbow-delimiters restart-emacs shell-pop magit
-	 undo-tree visual-regexp visual-regexp-steroids window-numbering yasnippet yasnippet-snippets helm-c-yasnippet))
-(dolist (pac request-packages)
-  (unless (package-installed-p pac)
-    (package-install pac)))
-
-(unless (require 'use-package nil t)
-  (defmacro use-package (&rest args)))
-
-(use-package magit
-  :config
-  (global-set-key (kbd "\C-x m") (make-sparse-keymap))
-  (global-set-key (kbd "\C-x m s") 'magit-status)
-  (global-set-key (kbd "\C-x m +") 'magit-stage-file)
-  (global-set-key (kbd "\C-x m c") 'magit-commit))
-
-;;;キーバインド
-;;C-c C-cでcomment-region, C-c C-;でuncomment-region
-(global-set-key (kbd "\C-c C-c") 'comment-region)
-(add-hook 'python-mode-hook (lambda () (define-key python-mode-map (kbd "\C-c C-c") 'comment-region)))
-(add-hook 'latex-mode-hook (lambda () (define-key latex-mode-map (kbd "\C-c C-c") 'comment-region)))
-(global-set-key (kbd "\C-c C-;") 'uncomment-region)
-
-(keyboard-translate ?\C-h ?\C-?) ;backspace
-(global-set-key (kbd "M-h") 'backward-kill-word)
-
-(global-set-key "\M-[" 'forward-sexp) ;対応する開き括弧へ移動
-(global-set-key "\M-]" 'backward-sexp) ;対応する閉じ括弧へ移動
-(global-set-key "\C-j" 'newline-and-indent)
-
-;;tab挿入
-(global-set-key "\C-t" '(lambda ()
-			  (interactive)
-			  (insert "\t")))
-;;文字の大きさ
-(global-set-key [(control ?\+)] '(lambda ()
-				   (interactive)
-				   (text-scale-increase 1)))
-(global-set-key [(control ?\-)] '(lambda ()
-				   (interactive)
-				   (text-scale-decrease 1)))
-
-(define-key global-map "\C-q" (make-sparse-keymap))
-;; quoted-insert は C-q C-q へ割り当て
-(global-set-key "\C-q\C-q" 'quoted-insert)
-
-;;;マウス無効化
-(global-unset-key [mouse-1])
-(global-unset-key [down-mouse-1])
-(global-unset-key [double-mouse-1])
-(global-unset-key [double-drag-Mouse-1])
-(global-unset-key [triple-mouse-1])
-(global-unset-key [triple-drag-mouse-1])
-(global-unset-key [\S-down-mouse-1])
-(global-unset-key [\C-down-mouse-1])
-(global-unset-key [\M-mouse-1])
-(global-unset-key [\M-down-mouse-1])
-(global-unset-key [\M-drag-mouse-1])
-(global-unset-key [mouse-2])
-(global-unset-key [mouse-3])
-(global-unset-key [\S-mouse-3])
-(global-unset-key [\S-down-mouse-3])
-(global-unset-key [\C-down-mouse-3])
-(global-unset-key [\M-mouse-3])
-
-;;latex-mode
-(defun insert-serif (name)
-    (cond ((string= name "P") (insert "\\iP「」"))
-	  ((string= name "NM") (insert "\\iNM「」"))
-	  (t (error "aaa can take \"P\" or \"NM\""))
-	  ))
-
-(defun insert-serif-P ()
-  (interactive)
-  (insert-serif "P")
-  (backward-char))
-
-(defun insert-serif-NM ()
-  (interactive)
-  (insert-serif "NM")
-  (backward-char))
-
-(add-hook 'latex-mode-hook (lambda () (define-key latex-mode-map (kbd "\C-c p") 'insert-serif-P)))
-(add-hook 'latex-mode-hook (lambda () (define-key latex-mode-map (kbd "\C-c n") 'insert-serif-NM)))
-
-(add-hook 'latex-mode-hook (lambda () (define-key latex-mode-map (kbd "C-j") 'newline)))
-
-;;;http://stackoverflow.com/questions/1771102/changing-emacs-forward-word-behaviour
-(defun my-syntax-class (char)
-  "Return ?s, ?w or ?p depending or whether CHAR is a white-space, word or punctuation character."
-  (pcase (char-syntax char)
-      (`?\s ?s)
-      (`?w ?w)
-      (`?_ ?w)
-      (_ ?p)))
-
-(defun my-forward-word (&optional arg)
-  "Move point forward a word (simulate behavior of Far Manager's editor).
-With prefix argument ARG, do it ARG times if positive, or move backwards ARG times if negative."
-  (interactive "^p")
-  (or arg (setq arg 1))
-  (let* ((backward (< arg 0))
-         (count (abs arg))
-         (char-next
-          (if backward 'char-before 'char-after))
-         (skip-syntax
-          (if backward 'skip-syntax-backward 'skip-syntax-forward))
-         (skip-char
-          (if backward 'backward-char 'forward-char))
-         prev-char next-char)
-    (while (> count 0)
-      (setq next-char (funcall char-next))
-      (cl-loop
-       (if (or                          ; skip one char at a time for whitespace,
-            (eql next-char ?\n)         ; in order to stop on newlines
-            (eql (char-syntax next-char) ?\s))
-           (funcall skip-char)
-         (funcall skip-syntax (char-to-string (char-syntax next-char))))
-       (setq prev-char next-char)
-       (setq next-char (funcall char-next))
-       ;; (message (format "Prev: %c %c %c Next: %c %c %c"
-       ;;                   prev-char (char-syntax prev-char) (my-syntax-class prev-char)
-       ;;                   next-char (char-syntax next-char) (my-syntax-class next-char)))
-       (when
-           (or
-            (eql prev-char ?\n)         ; stop on newlines
-            (eql next-char ?\n)
-            (and                        ; stop on word -> punctuation
-             (eql (my-syntax-class prev-char) ?w)
-             (eql (my-syntax-class next-char) ?p))
-            (and                        ; stop on word -> whitespace
-             this-command-keys-shift-translated ; when selecting
-             (eql (my-syntax-class prev-char) ?w)
-             (eql (my-syntax-class next-char) ?s))
-            (and                        ; stop on whitespace -> non-whitespace
-             (not backward)             ; when going forward
-             (not this-command-keys-shift-translated) ; and not selecting
-             (eql (my-syntax-class prev-char) ?s)
-             (not (eql (my-syntax-class next-char) ?s)))
-            (and                        ; stop on non-whitespace -> whitespace
-             backward                   ; when going backward
-             (not this-command-keys-shift-translated) ; and not selecting
-             (not (eql (my-syntax-class prev-char) ?s))
-             (eql (my-syntax-class next-char) ?s))
-            )
-         (cl-return))
-       )
-      (setq count (1- count)))))
-
-(defun my-backward-word (&optional arg)
-  (interactive "^p")
-  (or arg (setq arg 1))
-  (my-forward-word (- arg)))
-
-(defun my-delete-word (&optional arg)
-  "Delete characters forward until encountering the end of a word.
-With argument ARG, do this that many times."
-  (interactive "p")
-  (delete-region (point) (progn (my-forward-word arg) (point))))
-
-(defun my-backward-delete-word (arg)
-  "Delete characters backward until encountering the beginning of a word.
-With argument ARG, do this that many times."
-  (interactive "p")
-  (my-delete-word (- arg)))
-
-(global-set-key "\M-f" 'my-forward-word)
-(global-set-key "\M-b" 'my-backward-word)
-(global-set-key (kbd "M-h") 'my-backward-delete-word)
-
-(toggle-scroll-bar -1) ;横スクロールバーを表示しない
-(setq ring-bell-function 'ignore) ;ビープ音を無効
-(setq backup-inhibited t) ;バックアップファイルを作らない
-(setq inhibit-startup-message t) ;セットアップメッセージを非表示
-(fset 'yes-or-no-p 'y-or-n-p) ;yes/no の代わりに y/n
-(setq initial-scratch-message nil) ;scratchにメッセージを表示しない
-(setq select-enable-clipboard t) ;Yankバッファとクリップボードの同期
-(tool-bar-mode -1) ;ツールバーを非表示
-(menu-bar-mode -1) ;メニューバー非表示
-(put 'upcase-region 'disabled nil) ;upcase時にアラートを出さない
-(put 'downcase-region 'disabled nil) ;downcase時にアラートを出さない
-(auto-image-file-mode t) ;画像ファイルを表示可能に
-(ffap-bindings) ;C-x C-fをめちゃめちゃ便利に
-(setq frame-title-format (format "emacs")) ;title
-(setq-default indicate-buffer-boundaries 'right) ;右にEOFの印を表示
-
-(add-to-list 'auto-mode-alist '("\\.tex\\'" . latex-mode)) ;.texをlatex-modeで開く
-
-(find-file "~/.emacs.d/init.el") ;emacs起動時にinit.elを開く
-
-;;フォントの設定
-(set-face-attribute 'default nil
-		    :family "Ricty Diminished" ;; font
-		    :height 160)
-(set-fontset-font
- nil 'japanese-jisx0208
- (font-spec :family "Ricty Diminished"))
-
-;;#!が含まれるファイルに、実行許可を与える
-(add-hook 'after-save-hook
-	  'executable-make-buffer-file-executable-if-script-p)
-
-;;;cua-mode
-(cua-mode t)
-(setq cua-enable-cua-keys nil) ;cua-modeの変なキーバインド無効
-
-(use-package tabbar
-  :config
-  (setq tabbar-buffer-groups-function nil)
-  (setq tabbar-separator '(0.2))
-
-  (global-set-key (kbd "<C-tab>") 'tabbar-forward-tab)
-  (if (eq system-type 'windows-nt)
-      (global-set-key (kbd "<C-S-tab>") 'tabbar-backward-tab)
-    (global-set-key (kbd "<C-iso-lefttab>") 'tabbar-backward-tab))
-
-  (set-face-attribute
-   'tabbar-default nil
-   :background "black")
-
-  (set-face-attribute
-   'tabbar-unselected nil
-   :background "gray30"
-   :foreground "white"
-   :box nil)
-
-  (set-face-attribute
-   'tabbar-selected nil
-   :background "white"
-   :foreground "black")
-
-  (set-face-attribute
-   'tabbar-separator nil
-   :height 0.5
-   :background "black")
-
-  (set-face-attribute
-   'tabbar-selected-modified nil
-   :background "whilte"
-   :foreground "red"
-   :box nil)
-
-  (set-face-attribute
-   'tabbar-modified nil
-   :background "gray30"
-   :foreground "pink"
-   :box nil)
-
-  (dolist (btn '(tabbar-buffer-home-button
-		 tabbar-scroll-left-button
-		 tabbar-scroll-right-button))
-    (set btn (cons (cons "" nil)
-		   (cons "" nil))))
-
-  (defvar my-tabbar-displayed-buffers
-    '("*scratch*" "*eshell*"))
-
-  (defun my-tabbar-buffer-list ()
-    (let* ((hides (list ?\  ?\*))
-	   (re (regexp-opt my-tabbar-displayed-buffers))
-	   (cur-buf (current-buffer))
-	   (tabs (delq nil
-		       (mapcar (lambda (buf)
-				 (let ((name (buffer-name buf)))
-				   (when (or (string-match re name)
-					     (not (memq (aref name 0) hides)))
-				     buf)))
-			       (buffer-list)))))
-      (if (memq cur-buf tabs)
-	  tabs
-	(cons cur-buf tabs))))
-
-  (require 'cl)
-  (defun tabbar-move-current-tab-to (move-func)
-    "Move current tab to orientation that indicated by move-func."
-    "if move-func is \"1+\", move to next. if move-func is \"1-\", move to privious"
-    (let* ((bufset (tabbar-current-tabset t))
-	   (bufs (tabbar-tabs bufset))
-	   (current-buf-num 0)
-	   (temp-buf-num 0)
-	   (num-of-tab (safe-length bufs)))
-      ;; 現在のバッファと一致するものを探して先頭へ
-      (dolist (buf bufs)
-	(if (string= (buffer-name) (format "%s" (car buf)))
-	    (setq current-buf-num temp-buf-num)
-	  (setq temp-buf-num (1+ temp-buf-num))))
-      (rotatef (nth current-buf-num bufs) (nth (% (+ (funcall move-func current-buf-num) num-of-tab) num-of-tab) bufs))
-      ;; タブバー書き換え
-      (tabbar-set-template bufset nil)
-      (tabbar-display-update)))
-
-  (defun tabbar-move-current-tab-to-next ()
-    (interactive)
-    (tabbar-move-current-tab-to #'1+))
-
-  (defun tabbar-move-current-tab-to-previous ()
-    (interactive)
-    (tabbar-move-current-tab-to #'1-))
-
-  (global-set-key [(control \>)] 'tabbar-move-current-tab-to-next)
-  (global-set-key [(control \<)] 'tabbar-move-current-tab-to-previous)
-
-  (setq tabbar-buffer-list-function 'my-tabbar-buffer-list)
-  (tabbar-mode))
-
-;;対応する括弧を強調
-(show-paren-mode t)
-(setq show-paren-delay 0) ;ハイライトまでの遅延
-(setq show-paren-style 'expression) ;括弧内を強調
-;;対応する括弧までアンダーライン
-(set-face-attribute 'show-paren-match nil
-		    :background nil
-		    :foreground nil
-		    :underline "red"
-		    :weight 'extra-bold)
-
-(use-package rainbow-mode
-  :config
-  (add-hook 'lisp-interaction-mode-hook 'rainbow-mode)
-  (add-hook 'emacs-lisp-mode-hook 'rainbow-mode))
-
-(if window-system
-	(progn
-	  (put 'modeline 'face-alias 'mode-line)
-	  (set-face-foreground 'modeline "white") ;モードラインの文字の色
-	  (set-face-background 'modeline "black") ;モードラインの文字の色
-	  (set-face-foreground 'region "DeepPink1") ;リージョンの文字の色
-	  (set-face-background 'region "LightSkyBlue") ;リージョンの文字の色
-	  ;(set-frame-parameter nil 'fullscreen 'maximized) ;起動時最大化
-
-	  ;;現在行をハイライト
-	  (global-hl-line-mode t)
-	  (set-face-background 'hl-line "gray88")
-
-	  ;;ウィンドウサイズ
-	  (setq initial-frame-alist
-		(append (list
-			 '(top . 100)
-			 '(left . 160)
-			 '(width . 88)
-			 '(height . 42))
-			initial-frame-alist))
-
-	  ;;アルファ値
-	  (setq default-frame-alist
-			(append
-			 (list
-			  '(alpha . 95))
-			 default-frame-alist))))
-
-;;モードラインの時間表示
-(setq display-time-string-forms
-	  '(month "/" day "(" dayname ") " 24-hours ":" minutes))
-(display-time)
-
-;;モードライン
-(setq total-lines 0)
-(use-package total-lines
-  :if (locate-library "total-lines")
-  :config
-  (global-total-lines-mode t)
-  )
-
-(setq-default mode-line-format
-	      '("w"
-		mode-line-frame-identification
-		mode-line-buffer-identification
-		" ["
-		mode-name
-		mode-line-process
-		" | "
-		mode-line-mule-info
-		mode-line-modified
-		"] "
-		"%[(L:%l C:%c B:"
-		(-3 . "%p")
-		" T:"
-		(:eval (format "%d" (- total-lines 1)))
-		" S:"
-		(:eval (format "%d" (if (boundp 'text-scale-mode-amount) text-scale-mode-amount 0)))
-		")%] "
-		(which-func-mode ("" which-func-format "-"))
-		global-mode-string))
-
-(use-package window-numbering
-	     :config
-	     (global-set-key "\C-q0" 'select-window-0)
-	     (global-set-key "\C-q1" 'select-window-1)
-	     (global-set-key "\C-q2" 'select-window-2)
-	     (global-set-key "\C-q3" 'select-window-3)
-	     (global-set-key "\C-q4" 'select-window-4)
-	     (global-set-key "\C-q5" 'select-window-5)
-	     (global-set-key "\C-q6" 'select-window-6)
-	     (global-set-key "\C-q7" 'select-window-7)
-	     (global-set-key "\C-q8" 'select-window-8)
-	     (global-set-key "\C-q9" 'select-window-9)
-	     (window-numbering-mode))
-
+;;====================================================================================
+;; defuns
+;;====================================================================================
 (defun window-resizer ()
   "Control window size and position."
   (interactive)
@@ -422,637 +23,744 @@ With argument ARG, do this that many times."
               -1))
         (dy (if (= (nth 1 (window-edges)) 0) 1
               -1))
-		(sdx (nth 0 (window-edges)))
-		(sdy (nth 1 (window-edges)))
-		(edx (nth 2 (window-edges)))
-		(edy (nth 3 (window-edges)))
+        (sdx (nth 0 (window-edges)))
+        (sdy (nth 1 (window-edges)))
+        (edx (nth 2 (window-edges)))
+        (edy (nth 3 (window-edges)))
         c)
     (catch 'end-flag
       (while t
         (message "size[%dx%d] frame[%dx%d] edge[(%d %d) (%d %d)]"
                  (window-width) (window-height)
-				 (frame-width) (frame-height)
-				 sdx sdy edx edy)
+                 (frame-width) (frame-height)
+                 sdx sdy edx edy)
         (setq c (read-char))
         (cond ((= c ?f)
                (enlarge-window-horizontally dx))
-			  ((= c ?F)
-			   (enlarge-window-horizontally (/ (frame-width) 4)))
+              ((= c ?F)
+               (enlarge-window-horizontally (/ (frame-width) 4)))
               ((= c ?b)
                (shrink-window-horizontally dx))
               ((= c ?B)
                (shrink-window-horizontally (/ (frame-width) 4)))
               ((= c ?n)
-               (enlarge-window dy))
+               (shrink-windown dy))
               ((= c ?N)
-               (enlarge-window (/ (frame-height) 4)))
-              ((= c ?p)
-               (shrink-window dy))
-              ((= c ?P)
                (shrink-window (/ (frame-height) 4)))
+              ((= c ?p)
+               (enlarge-window dy))
+              ((= c ?P)
+               (enlarge-window (/ (frame-height) 4)))
               ;; otherwise
               (t
                (message "Quit")
                (throw 'end-flag t)))))))
 
-(global-set-key "\C-q\C-r" 'window-resizer)
-(global-set-key "\C-q\C-f" 'windmove-right)
-(global-set-key "\C-q\C-b" 'windmove-left)
-(global-set-key "\C-q\C-n" 'windmove-down)
-(global-set-key "\C-q\C-p" 'windmove-up)
+(defun text-scale-increase-1 ()
+  (interactive)
+  (text-scale-increase 1))
 
-(global-set-key (kbd "C-q k") 'delete-other-windows)
-(global-set-key (kbd "C-q K") 'delete-window)
+(defun text-scale-decrease-1 ()
+  (interactive)
+  (text-scale-decrease 1))
 
-(global-set-key (kbd "C-q w") 'split-window-below)
-(global-set-key (kbd "C-q h") 'split-window-right)
+(defun insert-t ()
+  (interactive)
+  (insert "\t"))
 
-;動的に透過率変更
-(defun set-alpha (alpha-num)
-  "set frame parameter 'alpha"
-  (interactive "nalpha: ")
-  (set-frame-parameter nil 'alpha (cons alpha-num '(95))))
-
-;;rainbow delimiters
-(use-package rainbow-delimiters
-  :config
-  (add-hook 'lisp-interaction-mode-hook '(lambda () (rainbow-delimiters-mode t)))
-  (add-hook 'emacs-lisp-mode-hook '(lambda () (rainbow-delimiters-mode t)))
-
-  (custom-set-faces
-   '(completions-common-part ((t (:inherit default :foreground "red"))))
-   '(diredp-compressed-file-suffix ((t (:foreground "#7b68ee"))))
-   '(diredp-ignored-file-name ((t (:foreground "#aaaaaa"))))
-
-   '(rainbow-delimiters-depth-1-face ((t (:foreground "blue"))))
-   '(rainbow-delimiters-depth-2-face ((t (:foreground "dark orange"))))
-   '(rainbow-delimiters-depth-3-face ((t (:foreground "DeepPink3"))))
-   '(rainbow-delimiters-depth-4-face ((t (:foreground "DeepSkyBlue"))))
-   '(rainbow-delimiters-depth-5-face ((t (:foreground "DarkMagenta"))))
-   '(rainbow-delimiters-depth-6-face ((t (:foreground "LimeGreen"))))
-   '(rainbow-delimiters-depth-7-face ((t (:foreground "yellow3"))))
-   '(rainbow-delimiters-depth-8-face ((t (:foreground "tomato"))))
-   '(rainbow-delimiters-depth-9-face ((t (:foreground "forest green"))))))
-
-;;行数の表示
-(use-package linum
-  :config
-  (global-linum-mode 1)
-  (setq linum-format " %5d ") ;フォーマット。５桁分の領域を確保
-  (custom-set-faces '(linum ((t
-			      ( :inherit (shadow default)
-					 :foreground "black"
-					 :background "white"
-					 :height 160))))))
-
-(use-package hlinum
-  :config
-  (hlinum-activate)
-  (custom-set-faces '(linum-highlight-face ((t
-					     (:foreground "black"
-							  :background "yellow"
-							  :underline nil
-							  :height 160))))))
-
-(use-package whitespace
-   :config
-  (setq whitespace-style '(face           ; faceで可視化
-  			   trailing       ; 行末
-  			   tabs           ; タブ
-  			   spaces         ; スペース
-  			   empty          ; 先頭/末尾の空行
-  			   space-mark     ; 表示のマッピング
-  			   tab-mark))
-
-  (setq whitespace-display-mappings
-  	'((space-mark ?\u3000 [?\u25a1])
-  	  (tab-mark ?\t [?\u00BB ?\t] [?\\ ?\t])))
-
-  ;; スペースは全角のみを可視化
-  (setq whitespace-space-regexp "\\(\u3000+\\)")
-
-  ;; 保存前に自動でクリーンアップ
-  (setq whitespace-action '(auto-cleanup))
-  (add-hook 'markdown-mode-hook
-  	    '(lambda ()
-  	       (set (make-local-variable 'whitespace-action) nil)))
-
-  (set-face-attribute 'whitespace-trailing nil
-  		      :background nil
-  		      :foreground "DeepPink"
-  		      :underline t)
-
-  (set-face-attribute 'whitespace-tab nil
-  		      :background nil
-  		      :foreground "LightSkyBlue"
-  		      :underline t)
-
-  (set-face-attribute 'whitespace-space nil
-  		      :background nil
-  		      :foreground "#0B6121"
-  		      :weight 'bold)
-
-  (set-face-attribute 'whitespace-empty nil
-  		      :background nil)
-
-  (global-whitespace-mode t))
-
-;;undo-tee
-(use-package undo-tree
-  :config
-  (global-undo-tree-mode)
-  (global-set-key "\C-z" 'undo-tree-visualize)
-  (define-key undo-tree-visualizer-mode-map (kbd "C-j") 'undo-tree-visualizer-quit)
-  (define-key undo-tree-visualizer-mode-map "\r" 'undo-tree-visualizer-quit))
-
-;;*scratch*
 (defun my-make-scratch (&optional arg)
   (interactive)
   (progn
-	(set-buffer (get-buffer-create "*scratch*"))
-	(funcall initial-major-mode)
-	(erase-buffer)
-	(when (and initial-scratch-message (not inhibit-startup-message))
-	  (insert initial-scratch-message))
-	(or arg (progn (setq arg 0)
-				   (switch-to-buffer "*scratch*")))
-	(cond ((= arg 0) (message "*scratch* is cleared up."))
-		  ((= arg 1) (message "another *scratch* is created.")))))
+    (set-buffer (get-buffer-create "*scratch*"))
+    (funcall initial-major-mode)
+    (erase-buffer)
+    (when (and initial-scratch-message (not inhibit-startup-message))
+      (insert initial-scratch-message))
+    (or arg (progn (setq arg 0)
+                   (switch-to-buffer "*scratch*")))
+    (cond ((= arg 0) (message "*scratch* is cleared up."))
+          ((= arg 1) (message "another *scratch* is created.")))))
 
-(add-hook 'kill-buffer-query-functions
-		  (lambda ()
-			(if (string= "*scratch*" (buffer-name))
-				(progn (my-make-scratch 0) nil)
-			  t)))
+(defun eshell-pronpt-func ()
+  (concat (propertize "yakumo@" 'face `(:foreground "lime green"))
+          (propertize (eshell/pwd) 'face `(:foreground "lime green"))
+          (propertize (if (= (user-uid) 0) "#" "$") 'face `(:foreground "lime green"))
+          (propertize " " 'face `(:foreground "black"))))
 
-(add-hook 'c-mode-hook 'hs-minor-mode)
-(add-hook 'c++-mode-hook 'hs-minor-mode)
-(add-hook 'ruby-mode-hook 'hs-minor-mode)
-(add-hook 'emacs-lisp-mode-hook 'hs-minor-mode)
-(add-hook 'lisp-intaraction-mode-hook 'hs-minor-mode)
-(define-key global-map (kbd "C-#") 'hs-toggle-hiding)
+(defun eshell-clear-buffer ()
+  ;;eshell上でのclearコマンド
+  (interactive)
+  (let ((inhibit-read-only t))
+    (erase-buffer)
+    (eshell-send-input)))
 
-(global-set-key (kbd "C-x C-b") 'ibuffer)
-(setq ibuffer-show-empty-filter-groups nil)
+(defun catenate (file)
+  ;;eshell上でのcatコマンド
+  (interactive "Ffile: ")
+  (let ((tfile (file-truename file)))
+    (kill-current-buffer)
+    (find-file tfile)))
 
-(setq ibuffer-saved-filter-groups
-      '(("default"
-	 ("dired" (mode . dired-mode))
-	 ("emacs" (or
-		   (name . "^\\*scratch\\*$")
-		   (name . "^\\*Messages\\*$")
-		   (name . "^\\*compilation\\*$")
-		   (name . "^\\*Compile-Log\\*$")
-		   (name . "^\\*backtrace\\*$")))
-	 ("helm" (or
-		  (name . "^\\*helm.+\\*$")))
-	 ("magit" (or
-		   (name . "^magit.+$"))))))
+;;====================================================================================
+;; leaves
+;;====================================================================================
+(leaf leaf-keywords
+  :ensure t
+  :init
+  (leaf hydra :ensure t)
+  (leaf el-get :ensure t)
+  (leaf blackout :ensure t)
 
-(add-hook 'ibuffer-mode-hook '(lambda () (ibuffer-switch-to-saved-filter-groups "default")))
-
-;;helm
-(use-package helm-config
   :config
-  (helm-mode 1)
-  (defvar helm-source-emacs-commands
-    (helm-build-sync-source "Emacs commands"
-      :candidates (lambda ()
-		    (let ((cmds))
-		      (mapatoms
-		       (lambda (elt) (when (commandp elt) (push elt cmds))))
-		      cmds))
-      :coerce #'intern-soft
-      :action #'command-execute)
-    "A simple helm source for Emacs commands.")
+  (leaf-keywords-init))
 
-  (defvar helm-source-emacs-commands-history
-    (helm-build-sync-source "Emacs commands history"
-      :candidates (lambda ()
-		    (let ((cmds))
-		      (dolist (elem extended-command-history)
-			(push (intern elem) cmds))
-		      cmds))
-      :coerce #'intern-soft
-      :action #'command-execute)
-    "Emacs commands history")
+(leaf base-settings
+  :config
+  (toggle-scroll-bar -1) ;横スクロールバーを表示しない
+  (tool-bar-mode -1) ;ツールバーを非表示
+  (menu-bar-mode -1) ;メニューバー非表示
+  (fset 'yes-or-no-p 'y-or-n-p) ;yes/no の代わりに y/n
+  (blink-cursor-mode 0) ; カーソルの点滅を OFF にする
+  (put 'upcase-region 'disabled nil) ;upcase時にアラートを出さない
+  (put 'downcase-region 'disabled nil) ;downcase時にアラートを出さない
+  (ffap-bindings) ;C-x C-fをめちゃめちゃ便利に
+  (cua-mode t)
+  (add-hook 'kill-buffer-query-functions
+            (lambda ()
+              (if (string= "*scratch*" (buffer-name))
+                  (progn (my-make-scratch 0) nil)
+                t)))
+  :setq-default
+  `((ring-bell-function . 'ignore) ;ビープ音を無効
+    (backup-inhibited . t) ;バックアップファイルを作らない
+    (inhibit-startup-message . t) ;セットアップメッセージを非表示
+    (initial-scratch-message . "(setq eval-expression-print-length nil)\n(setq eval-expression-print-level nil)") ;scratchにメッセージを表示しない
+    (select-enable-clipboard . t) ;Yankバッファとクリップボードの同期
+    (indicate-buffer-boundaries . 'left) ;右にEOFの印を表示
+    (indent-tabs-mode . nil)
+    (default-tab-width . 4) ;タブ幅4
+    (cua-enable-cua-keys . nil) ;cua-modeの変なキーバインド無効
+    ))
 
-					; Emulate `kill-line' in helm minibuffer
-  (setq helm-delete-minibuffer-contents-from-point t)
-  (defadvice helm-delete-minibuffer-contents (before helm-emulate-kill-line activate)
-    "Emulate `kill-line' in helm minibuffer"
-    (kill-new (buffer-substring (point) (field-end))))
+(leaf key-bindings
+  :bind
+  ("C-j" . newline-and-indent)
+  ("M-]" . forward-sexp) ;対応する開き括弧へ移動
+  ("M-[" . backward-sexp) ;対応する閉じ括弧へ移動
+  ("M-h" . backward-kill-word)
+  ("C-c C-c" . comment-region)
+  ("C-c C-;" . uncomment-region)
+  ("C-t" . insert-t)
+  ("C-+" . text-scale-increase-1)
+  ("C--" . text-scale-decrease-1))
 
-					;find-file-at-pointのui
-  (add-to-list 'helm-completing-read-handlers-alist '(find-file-at-point . nil))
+(define-key key-translation-map (kbd "C-h") (kbd "<DEL>")) ;minibufferにも反映させる
+(define-key lisp-interaction-mode-map (kbd "C-j") 'newline-and-indent)
+(define-key lisp-interaction-mode-map (kbd "C-m") 'eval-print-last-sexp)
+(define-key global-map "\C-q" (make-sparse-keymap))
+(global-set-key (kbd "C-q C-q") 'quoted-insert) ;quoted-insert は C-q C-q へ割り当て
+;;windowに関するキーバインド
+(global-set-key (kbd "C-q k") 'delete-other-windows)
+(global-set-key (kbd "C-q K") 'delete-window)
+(global-set-key (kbd "C-q w") 'split-window-below)
+(global-set-key (kbd "C-q h") 'split-window-right)
+(global-set-key (kbd "C-q f") 'windmove-right)
+(global-set-key (kbd "C-q b") 'windmove-left)
+(global-set-key (kbd "C-q n") 'windmove-down)
+(global-set-key (kbd "C-q p") 'windmove-up)
+(global-set-key (kbd "C-q r") 'window-resizer)
 
-  (custom-set-variables
-   '(helm-mini-default-sources '(helm-source-buffers-list
-				 helm-source-files-in-current-dir
-				 helm-source-emacs-commands-history
-				 helm-source-emacs-commands)))
+(leaf font-setting
+  :config
+  ;;http://extra-vision.blogspot.com/2016/07/emacs.html
+  (create-fontset-from-ascii-font
+   "Ricty Diminished-16:weight=normal:slant=normal"
+   nil
+   "Ricty_Diminished")
 
+  (set-fontset-font
+   "fontset-Ricty_Diminished"
+   'unicode
+   "Ricty Diminished-16:weight=normal:slant=normal"
+   nil
+   'append)
+
+  (add-to-list 'default-frame-alist '(font . "fontset-Ricty_Diminished")))
+
+(leaf face-setting
+  :config
+  (show-paren-mode t) ;対応する括弧を強調
+  (global-display-line-numbers-mode) ;行数表示
+  (global-hl-line-mode t) ;現在行ハイライト
+  (set-face-attribute 'show-paren-match nil
+                      :background nil
+                      :foreground nil
+                      :underline "red"
+                      :weight 'extra-bold)
+  (set-face-attribute 'mode-line nil
+                      :foreground "white"
+                      :background "black")
+  (set-face-attribute 'region nil
+                      :foreground "DeepPink1"
+                      :background "LightSkyBlue")
+  (set-face-attribute 'hl-line nil
+                      :background "gray88")
+  (set-face-attribute 'line-number nil
+                      :background "gray88"
+                      :foreground "black")
+  (set-face-attribute 'line-number-current-line nil
+                      :foreground "red"
+                      :background nil
+                      :weight 'ultra-bold)
+
+  :setq `((show-paren-delay . 0) ;括弧のハイライトまでの遅延
+          (show-paren-style . 'expression) ;括弧内を強調
+          ))
+
+(leaf smart-mode-line
+  :ensure t
+  :init
+  (column-number-mode t)
+  (setq sml/no-confirm-load-theme t)
+  (defvar sml/shorten-directory nil)
+  (defun my-set-line-numbers ()
+    (setq-default mode-line-front-space
+                  (append mode-line-front-space
+                          '((:eval (format ":%d" total-lines))))))
+  (setq display-time-string-forms
+        '(month "/" day "(" dayname ") " 24-hours ":" minutes))
+  :config
+  (leaf total-lines
+    :ensure t
+    :require t
+    :init
+    (global-total-lines-mode t))
+  (display-time)
+  (add-hook 'after-init-hook 'my-set-line-numbers)
+  (sml/setup))
+
+(leaf visual-regexp-steroids
+  :ensure t
+  :init
+  (leaf visual-regexp
+    :ensure t
+    :require t)
+  :setq
+  (search-default-regexp-mode . nil)
+  :config
+  (define-key global-map (kbd "C-@") 'vr/query-replace))
+
+(leaf helm-config
+  :ensure t
+  :init
+  (leaf helm
+    :ensure t
+    :require t)
+  (leaf helm-smex
+    :ensure t
+    :require t)
+  :config
+  (global-set-key (kbd "C-;") 'helm-command-prefix)
+  (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
   (define-key helm-map (kbd "C-h") 'delete-backward-char)
-  (define-key helm-find-files-map (kbd "C-h") 'delete-backward-char)
-  (define-key helm-find-files-map (kbd "TAB") 'helm-execute-persistent-action)
-  (define-key helm-read-file-map (kbd "TAB") 'helm-execute-persistent-action)
-  (define-key global-map (kbd "M-x") 'helm-M-x)
-  (define-key global-map (kbd "C-;") 'helm-mini)
-  (define-key global-map (kbd "M-y") 'helm-show-kill-ring)
-  (define-key helm-map (kbd "C-j") 'helm-maybe-exit-minibuffer))
+  (define-key helm-map (kbd "C-j") 'helm-maybe-exit-minibuffer)
+  (define-key helm-map (kbd "C-l") 'helm-previous-source)
+  (global-set-key (kbd "M-y") 'helm-show-kill-ring)
+  (global-set-key (kbd "M-x") 'helm-smex)
+  (helm-autoresize-mode t)
+  (helm-mode t)
+  :setq
+  (helm-split-window-in-side-p . t)
+  (helm-move-to-line-cycle-in-source . t)
+  (helm-ff-search-library-in-sexp . t)
+  (helm-scroll-amount . 8)
+  (helm-ff-file-name-history-use-recentf . t)
+  (helm-autoresize-max-height . 50)
+  (helm-autoresize-min-height . 50)
+  (helm-M-x-fuzzy-match . t))
 
-;;yasnippet
-(use-package yasnippet
+(leaf helm-swoop
+  :ensure t
+  :after helm migemo
+  :bind ("M-i" . helm-swoop)
   :config
+  (helm-migemo-mode t))
+
+(leaf ace-window
+  :ensure t
+  :config
+  (global-set-key (kbd "C-q o") 'ace-window)
+  :custom-face
+  (aw-leading-char-face . '((t
+                             (:height 5.0
+                                      :foreground "red"))))
+  :setq
+  (aw-keys . '(?j ?k ?l ?\; ?a ?s ?d ?f)))
+
+(leaf ibuffer
+  :config
+  (global-set-key (kbd "C-x C-b") 'ibuffer)
+  (setq ibuffer-show-empty-filter-groups nil)
+  (setq ibuffer-saved-filter-groups
+        '(("default"
+           ("dired" (mode . dired-mode))
+           ("emacs" (or
+                     (name . "^\\*scratch\\*$")
+                     (name . "^\\*Messages\\*$")
+                     (name . "^\\*compilation\\*$")
+                     (name . "^\\*Compile-Log\\*$")
+                     (name . "^\\*backtrace\\*$")))
+           ("helm" (or
+                    (name . "^\\*helm.+\\*$")))
+           ("magit" (or
+                     (name . "^magit.+$"))))))
+  (add-hook 'ibuffer-mode-hook '(lambda () (ibuffer-switch-to-saved-filter-groups "default"))))
+
+(leaf flycheck
+  :ensure t)
+
+(leaf yasnippet
+  :ensure t
+  :init
   (yas-global-mode)
-  (define-key yas-minor-mode-map (kbd "C-'") 'yas/expand)
-  (define-key yas-minor-mode-map "\r" nil)
-  (use-package helm-c-yasnippet
-    :config
-    (setq helm-yas-space-match-any-greedy t)
-    (global-set-key (kbd "C-c y") 'helm-yas-complete)
-    (push '("emacs.+/snippets/" . snippet-mode) auto-mode-alist)))
-
-(use-package company
   :config
-  (setq company-idle-delay 0)
-  (setq company-minimum-prefix-length 2)
-  (setq company-selection-wrap-around t)
+  (define-key yas-minor-mode-map (kbd "C-'") 'yas-expand)
+  (define-key yas-minor-mode-map "\r" nil)
+  (locate-user-emacs-file "snippets")
+  (leaf yasnippet-snippets
+    :ensure t))
 
+(leaf helm-c-yasnippet
+  :ensure t
+  :after helm yasnippet
+  :setq
+  (helm-yas-space-match-any-greedy . t)
+  :config
+  (global-set-key (kbd "C-; y") 'helm-yas-complete)
+  (push '("emacs.+/snippets/" . snippet-mode) auto-mode-alist))
+
+(leaf company
+  :ensure t
+  :after yasnippet
+  :init
+  (global-company-mode)
+  :config
   (define-key company-active-map (kbd "M-n") nil)
   (define-key company-active-map (kbd "M-p") nil)
   (define-key company-active-map (kbd "C-h") nil)
   (define-key company-active-map (kbd "C-n") 'company-select-next)
   (define-key company-active-map (kbd "C-p") 'company-select-previous)
   (define-key company-active-map (kbd "C-j") 'company-complete-selection)
-
+  (define-key company-active-map (kbd "C-m") 'newline-and-indent)
+  ;; yasnippetとの連携
+  (defvar company-mode/enable-yas t)
+  (defun company-mode/backend-with-yas (backend)
+    (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+        backend
+      (append (if (consp backend) backend (list backend))
+              '(:with company-yasnippet))))
+  (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
   (set-face-attribute
    'company-tooltip nil
    :foreground "black"
-   :background "gray90")
-
+   :background "#eaedf7")
   (set-face-attribute
    'company-tooltip-common nil
-   :foreground "black"
-   :background "gray90"
+   :foreground "#d41513"
+   :background nil
    :bold t)
-
   (set-face-attribute
    'company-tooltip-common-selection nil
-   :foreground "black"
-   :background "deep sky blue"
-   :bold t)
-
+   :foreground nil
+   :background nil)
   (set-face-attribute
    'company-tooltip-selection nil
-   :foreground "black"
-   :background "deep sky blue"
+   :foreground nil
+   :background "sky blue"
    :bold nil)
-
   (set-face-attribute
    'company-preview-common nil
-   :background "deep sky blue"
-   :foreground "black"
-   :underline t)
-
+   :background nil
+   :foreground nil
+   :underline nil)
   (set-face-attribute
    'company-scrollbar-fg nil
-   :background "black")
-
+   :background "blue")
   (set-face-attribute
    'company-scrollbar-bg nil
-   :background "gray80")
-  (global-company-mode))
-
-;;irony
-(use-package irony
-  :config
-  (add-hook 'c-mode-hook 'irony-mode)
-  (add-hook 'c++-mode-hook 'irony-mode)
-  (add-hook 'objc-mode-hook 'irony-mode)
-  (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
-  (add-to-list 'company-backends 'company-irony))
-
-(use-package image+
-  :config
-  (imagex-auto-adjust-mode 1)
-  (imagex-global-sticky-mode 1))
-
-;;preview latex
-(use-package px
-  :config
-  (setq org-format-latex-options
-	'(:foreground default
-		      :background default
-		      :scale 3.0
-		      :html-foreground "Black"
-		      :html-background "Transparent"
-		      :html-scale 1.0
-		      :matchers ("begin" "$1" "$" "$$" "\\(" "\\["))))
-
-(define-key dired-mode-map "r" 'revert-buffer)
-(define-key dired-mode-map "\C-j" 'dired-find-file)
-
-;;org
-(define-key org-mode-map (kbd "C-m") 'org-return-indent)
-(define-key org-mode-map (kbd "C-j") 'org-insert-heading)
-(use-package tabbar
-  :config
-  (define-key org-mode-map (kbd "<C-tab>") 'tabbar-forward-tab))
-
-;;dired
-(use-package dired-toggle
-  :config
-  (setq dired-toggle-window-size 48)
-;;(define-key dired-mode-map (kbd "C-j") 'dired-toggle-action-find-file)
+   :background "#c6d1f7")
+  :setq
+  (company-idle-delay . 0)
+  (company-minimum-prefix-length . 2)
+  (company-selection-wrap-around . t)
+  (company-dabbrev-downcase . nil) ;;case sensitiveに
   )
 
-(use-package dired-details
-  :if (locate-library "dired-details")
-  :config
-  (dired-details-install))
+(leaf hs-minor-mode
+  :init
+  (define-key global-map (kbd "C-#") 'hs-toggle-hiding)
+  :hook
+  c-mode-hook
+  c++-mode-hook
+  ruby-mode-hook
+  emacs-lisp-mode-hook
+  lisp-intaraction-mode-hook)
 
-(use-package migemo
+(leaf xref
+  :config
+  (define-key global-map (kbd "C-.") 'xref-find-definitions)
+  (define-key global-map (kbd "C-,") 'xref-pop-marker-stack))
+
+(leaf lsp-mode
+  :ensure t
+  :setq
+  (lsp-eldoc-render-all . t)
+  (lsp-enable-indentation . nil)
+  (lsp-prefer-capf . t)
+  :config
+  (add-hook 'c++-mode-hook #'lsp)
+  (add-hook 'c-mode-hook #'lsp))
+
+(leaf lsp-ui
+  :ensure t
+  :after lsp-mode flycheck xref
+  :config
+  (define-key lsp-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
+  (define-key lsp-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references)
+  (add-hook 'lsp-mode-hook 'lsp-ui-mode)
+  :bind
+  ((:lsp-mode-map
+   ;;("C-c C-r" . lsp-ui-peek-find-references)
+   ;;("C-c C-j" . lsp-ui-peek-find-definitions)
+   ("C-c i"   . lsp-ui-imenu)
+   ("M-,"   . lsp-ui-peek-find-implementation)
+   ;;("C-c s"   . lsp-ui-sideline-mode)
+   ;;("C-c d"   . ladicle/toggle-lsp-ui-doc))
+   )
+   (:lsp-ui-imenu-mode-map
+    ("C-j" . lsp-ui-imenu--visit)))
+  :setq
+  (lsp-ui-peek-enable . t)
+  (lsp-ui-peek-always-show . t)
+  (lsp-ui-peek-peek-height . 30)
+  (lsp-ui-peek-list-width . 30)
+  (lsp-ui-peek-fontify . 'always)
+  (lsp-ui-flycheck-enable . t)
+  (lsp-ui-sideline-enable . t)
+  (lsp-ui-sideline-ignore-duplicate . t)
+  (lsp-ui-sideline-show-symbol  . t)
+  (lsp-ui-sideline-show-hover . t)
+  (lsp-ui-sideline-show-diagnostics . t)
+  (lsp-ui-sideline-show-code-actions . t)
+  (lsp-ui-imenu-enable . t)
+  (lsp-ui-imenu-kind-position . 'top)
+  (lsp-ui-doc-position . 'at-point)
+  (lsp-ui-doc-delay . 0.2)
+  :hook lsp-mode)
+
+(leaf ccls
+  :ensure t
+  :hook c-mode c++-mode
+  :custom
+  (ccls-executable . "/usr/local/bin/ccls"))
+
+(leaf projectile
+  :ensure t
+  :init
+  (projectile-mode t))
+
+(leaf neotree
+  :ensure t
+  :after projectile
+  :commands
+  (neotree-show neotree-hide neotree-dir neotree-find)
+  :custom
+  (neo-theme . 'nerd2)
+  :bind
+  ("C-c d" . neotree-projectile-toggle)
+  :preface
+  (defun neotree-projectile-toggle ()
+    (interactive)
+    (let ((project-dir
+           (ignore-errors
+         ;;; Pick one: projectile or find-file-in-project
+             (projectile-project-root)
+             ))
+          (file-name (buffer-file-name))
+          (neo-smart-open t))
+      (if (and (fboundp 'neo-global--window-exists-p)
+               (neo-global--window-exists-p))
+          (neotree-hide)
+        (progn
+          (neotree-show)
+          (if project-dir
+              (neotree-dir project-dir))
+          (if file-name
+              (neotree-find file-name)))))))
+
+(leaf magit
+  :ensure t)
+
+(leaf restart-emacs
+  :ensure t)
+
+(leaf undo-tree
+  :ensure t
+  :global-minor-mode global-undo-tree-mode
+  :bind
+  ("\C-z" . undo-tree-visualize)
+  :config
+  (define-key undo-tree-visualizer-mode-map (kbd "C-j") 'undo-tree-visualizer-quit))
+
+(leaf rainbow-mode
+  :ensure t
+  :hook
+  lisp-interaction-mode-hook
+  emacs-lisp-mode-hook)
+
+(leaf rainbow-delimiters
+  :ensure t
+  :init
+  (rainbow-delimiters-mode t)
+  :hook
+  lisp-interaction-mode-hook
+  emacs-lisp-mode-hook
+  :config
+  (set-face-attribute 'rainbow-delimiters-depth-1-face nil
+                      :foreground "blue")
+  (set-face-attribute 'rainbow-delimiters-depth-2-face nil
+                      :foreground "dark orange")
+  (set-face-attribute 'rainbow-delimiters-depth-3-face nil
+                      :foreground "DeepPink3")
+  (set-face-attribute 'rainbow-delimiters-depth-4-face nil
+                      :foreground "DeepSkyBlue")
+  (set-face-attribute 'rainbow-delimiters-depth-5-face nil
+                      :foreground "DarkMagenta")
+  (set-face-attribute 'rainbow-delimiters-depth-6-face nil
+                      :foreground "#006432")
+  (set-face-attribute 'rainbow-delimiters-depth-7-face nil
+                      :foreground "yellow3")
+  (set-face-attribute 'rainbow-delimiters-depth-8-face nil
+                      :foreground "tomato")
+  (set-face-attribute 'rainbow-delimiters-depth-9-face nil
+                      :foreground "green"))
+
+(leaf tab-bar
+  :init
+  (tab-bar-mode)
+
+  :config
+  (set-face-attribute 'tab-bar-tab nil
+                      :foreground "black"
+                      :background "white")
+  (set-face-attribute 'tab-bar-tab-inactive nil
+                      :foreground "white"
+                      :background "gray30")
+  (set-face-attribute 'tab-bar nil
+                      :background "black"))
+
+(leaf whitespace
+  :init
+  (global-whitespace-mode t)
+
+  :setq-default
+  (whitespace-style . '(face           ; faceで可視化
+                        trailing       ; 行末
+                        tabs           ; タブ
+                        spaces         ; スペース
+                        empty          ; 先頭/末尾の空行
+                        ))
+  (whitespace-space-regexp . "\\(\u3000+\\)")
+  (whitespace-action . '(auto-cleanup))
+
+  :config
+  (add-hook 'markdown-mode-hook
+            '(lambda ()
+               (set (make-local-variable 'whitespace-action) nil)))
+  (set-face-attribute 'whitespace-trailing nil
+                      :foreground "DeepPink"
+                      :background nil
+                      :underline t)
+  (set-face-attribute 'whitespace-tab nil
+                      :foreground nil
+                      :background "azure")
+  (set-face-attribute 'whitespace-space nil
+                      :foreground nil
+                      :background nil)
+  (set-face-attribute 'whitespace-empty nil
+                      :foreground nil
+                      :background nil))
+
+(leaf eshell-mode
+  :after helm
+  :setq-default
+  (eshell-path-env . '(getenv "PATH")) ;pathの設定
+  (eshell-prompt-function . 'eshell-pronpt-func) ;prompt
+  (eshell-prompt-regexp . "^[^#$]*[#$] ") ;promptの先頭
+  (eshell-command-aliases-list .
+                               '(append
+                                 (list
+                                  (list "ll" "ls -l")
+                                  (list "la" "ls -a")
+                                  (list "c" "cd $wd")
+                                  (list "cat" "catenate $1 > /dev/null"))))
+
+  :config
+  (add-hook 'eshell-mode-hook
+            (lambda ()
+              (progn
+                ;;TODO:プロンプトの先頭でC-bを押下するとカーソルが食い込む
+                (define-key eshell-mode-map "\C-a" 'eshell-bol) ;C-aでプロンプトの前に移動
+                ;;C-p,C-nでコマンド履歴ループ
+                (define-key eshell-mode-map "\C-p" 'eshell-previous-matching-input-from-input)
+                (define-key eshell-mode-map "\C-n" 'eshell-next-matching-input-from-input)
+                (define-key eshell-mode-map "\C-j" 'eshell-send-input)
+                (define-key eshell-mode-map "\C-l" 'eshell-clear-buffer))))
+
+  ;;helmを使用する
+  (add-hook 'eshell-mode-hook
+            #'(lambda ()
+                (define-key eshell-mode-map
+                  (kbd "M-p")
+                  'helm-eshell-history)))
+  (add-hook 'eshell-mode-hook
+            #'(lambda ()
+                (define-key eshell-mode-map
+                  (kbd "M-n")
+                  'helm-esh-pcomplete))))
+
+(leaf migemo
+  :ensure t
+  :require t
   :config
   (cond ((file-exists-p "/usr/share/cmigemo/")
-	 (setq migemo-dictionary "/usr/share/cmigemo/utf-8/migemo-dict"))
-	((file-exists-p "~/.emacs.d/conf/migemo")
-	 (setq migemo-dictionary "~/.emacs.d/conf/migemo/dict/utf-8/migemo-dict"))
-	(t
-	  (setq migemo-dictionary "/usr/share/migemo/utf-8/migemo-dict")))
-  (setq migemo-command "cmigemo")
-  (setq migemo-options '("-q" "--emacs"))
-  (setq migemo-user-dictionary nil)
-  (setq migemo-coding-system 'utf-8)
-  (setq migemo-regex-dictionary nil)
-  (load-library "migemo")
-  (migemo-init))
+         (setq migemo-dictionary "/usr/share/cmigemo/utf-8/migemo-dict"))
+        ((file-exists-p "~/.emacs.d/conf/migemo")
+         (setq migemo-dictionary "~/.emacs.d/conf/migemo/dict/utf-8/migemo-dict"))
+        (t
+         (setq migemo-dictionary "/usr/share/migemo/utf-8/migemo-dict")))
+  (migemo-init)
+  :setq
+  (migemo-command . "cmigemo")
+  (migemo-options . '("-q" "--emacs"))
+  (migemo-user-dictionary . nil)
+  (migemo-coding-system . 'utf-8)
+  (migemo-regex-dictionary . nil)
+  (load-library . "migemo"))
 
-(setq search-default-regexp-mode nil)
+(leaf shell-pop
+  :ensure t
+  :custom
+  (shell-pop-term-shell . "/usr/bin/zsh")
+  (shell-pop-universal-key . "C-$")
+  (shell-pop-window-height . 75)
+  (shell-pop-full-span . t)
+  (shell-pop-window-position . "top")
+  (shell-pop-shell-type . (quote ("eshell" "*eshell*"
+                                  (lambda nil (eshell shell-pop-term-shell)))))
+  )
 
-;;正規表現をPython風に
-(use-package visual-regexp)
-(use-package visual-regexp-steroids
-   :config
-   (define-key global-map (kbd "C-@") 'vr/query-replace))
-
-(use-package ace-isearch
+(leaf mozc
+  :ensure t
+  :after
   :config
-  (global-ace-isearch-mode 1)
-  (setq ace-isearch-jump-delay 0.5)
-  (setq ace-isearch-input-length 2)
-  (setq helm-swoop-split-direction 'split-window-horizontally)
-  (setq helm-swoop-split-with-multiple-windows t)
-  (helm-migemo-mode 1))
-
-(use-package markdown-mode
-  :config
-  (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
-  (define-key markdown-mode-map (kbd "\C-c \C-c \C-e") 'markdown-export)
-  (define-key markdown-mode-map (kbd "\C-c \C-c \C-v")
-    (lambda ()
-      (interactive)
-      (let ((html-file-name (concat (file-name-sans-extension buffer-file-name) ".html")))
-	(markdown-export html-file-name)
-	(when (one-window-p) (split-window))
-	(other-window 1)
-	(w3m-find-file html-file-name)))))
-
-(put 'dired-find-alternate-file 'disabled nil)
-
-;;xref
-(define-key xref--xref-buffer-mode-map (kbd "C-n") 'xref-next-line)
-(define-key xref--xref-buffer-mode-map (kbd "C-p") 'xref-prev-line)
-
-(defun byte-compile-this-file ()
-  "Compile current-buffer-file of Lisp into a file of byte code."
-  (interactive)
-  (byte-compile-file buffer-file-name t))
-
-;;elファイルを保存した時にコンパイルする
-(add-hook 'after-save-hook (lambda ()
-			     (when (and (string= (file-name-extension buffer-file-name) "el") (not (string= (file-name-nondirectory buffer-file-name) "init.el")))
-			       (byte-compile-this-file)
-			       (message (format "Wrote %s and byte-compile to %s.elc" buffer-file-name (file-name-sans-extension buffer-file-name))))))
-
-(use-package multi-compile
-  :config
-  (setq multi-compile-alist '(
-			      (c-mode . (("c-release" . "clang -O2 -Wall -lm -o %file-sans %file-name")
-					 ("c-cv-release" . "clang -O2 -Wall -o %file-sans %file-name `pkg-config opencv --libs --cflags`")
-					 ("c-glfw-release" . "clang -O2 -Wall -o %file-sans %file-name `pkg-config glfw3 --libs --cflags` `pkg-config gl --libs --cflags`"))
-				      )
-			      (c++-mode . (("c++-release" . "clang++ --std=c++14 -O2 -Wall -o %file-sans %file-name")
-					   ("c++-cv-release" . "clang++ --std=c++14 -O2 -Wall -o %file-sans %file-name `pkg-config opencv --libs --cflags`")
-					   ("c++-glfw-release" . "clang++ --std=c++14 -O2 -Wall -o %file-sans %file-name `pkg-config glfw3 --libs --cflags`"))
-					)
-			      (latex-mode . (("platex" . "platex %file-name")
-					     ("rake" . "rake"))
-					  )
-			      ;("\\.dot\\'" . (("dot" . "dot -Teps %file-name -o %file-sans.eps")))
-			      ))
-
-;;compilation modeのwindowのサイズ
-  (setq compilation-window-height 15)
-
-;;compilation bufferのwindowがでる位置を下の方にする
-  (defun custom-compilation-buffer-window ()
-    (when (not (get-buffer-window "*compilation*"))
-      (save-selected-window
-	(save-excursion
-	  (let* ((w (split-window-vertically))
-		 (h (window-height w)))
-	    (select-window w)
-	    (switch-to-buffer "*compilation*")
-	    (shrink-window (- h compilation-window-height)))))))
-
-;;compilation modeでコンパイルが成功したときにバッファが消える時間
-  (setq killing-compilation-buffer-time 1)
-
-;;compilation modeでコンパイルが成功したときに*compilation*バッファを消す
-  (defun bury-compile-buffer-if-successful (buffer string)
-    "Bury a compilation buffer if succeeded without warnings "
-    (if (and
-	 (string-match "compilation" (buffer-name buffer))
-	 (string-match "finished" string)
-	 (not
-	  (with-current-buffer buffer
-	    (goto-char (point-min))
-	    (search-forward "warning" nil t))))
-	(save-selected-window
-	  (run-with-timer killing-compilation-buffer-time nil
-			  (lambda ()
-			    (switch-to-buffer "*compilation*")
-			    (kill-buffer-and-window)
-			    )))))
-
-  (add-hook 'compilation-finish-functions 'bury-compile-buffer-if-successful)
-  (add-hook 'compilation-mode-hook 'custom-compilation-buffer-window)
-
-  (setq multi-compile-completion-system 'helm)
-
-  ;;コンパイルの前にセーブする
-  (defun save-multi-compile-run ()
-    (interactive)
-    (save-buffer)
-    (multi-compile-run))
-
-  (global-set-key (kbd "C-c c") 'save-multi-compile-run))
-
-;;スタイル設定
-(add-hook 'c-mode-hook
-          '(lambda()
-             (c-set-style "stroustrup")
-             ))
-
-(when (file-exists-p "~/.emacs.d/wd.el") (load "~/.emacs.d/wd.el"))
-
-;;emacs起動時にワーキングディレクトリのdiredを起動
-(dired (getenv "wd"))
-
-(setq eshell-cmpl-ignore-case t) ;補完時に大文字、小文字を区別しない
-(setq eshell-hist-ignoredups t) ;;履歴で重複を無視
-;;pathの設定
-(setq eshell-path-env (getenv "PATH"))
-
-;;clear
-(defun eshell-clear-buffer ()
-  (interactive)
-  (let ((inhibit-read-only t))
-    (erase-buffer)
-    (eshell-send-input)))
-
-;;prompt
-(setq eshell-prompt-function
-      (lambda ()
-	(concat (propertize "yakumo@" 'face `(:foreground "lime green"))
-		(propertize (eshell/pwd) 'face `(:foreground "lime green"))
-		(propertize (if (= (user-uid) 0) "#" "$") 'face `(:foreground "lime green"))
-		(propertize " " 'face `(:foreground "black")))))
-(setq eshell-prompt-regexp "^[^#$]*[#$] ") ;promptの先頭
-
-;;キーバインド
-;;TODO:プロンプトの先頭でC-bを押下するとカーソルが食い込む
-(add-hook 'eshell-mode-hook
-	  '(lambda ()
-	     (progn
-	       (define-key eshell-mode-map "\C-a" 'eshell-bol) ;C-aでプロンプトの前に移動
-	       ;;C-p,C-nでコマンド履歴ループ
-	       (define-key eshell-mode-map "\C-p" 'eshell-previous-matching-input-from-input)
-	       (define-key eshell-mode-map "\C-n" 'eshell-next-matching-input-from-input)
-	       (define-key eshell-mode-map "\C-j" 'eshell-send-input)
-	       (define-key eshell-mode-map "\C-l" 'eshell-clear-buffer))))
-
-(defun catenate (file)
-  (interactive "Ffile: ")
-  (let ((tfile (file-truename file)))
-    (kill-current-buffer)
-    (find-file tfile)))
-
-(setq eshell-command-aliases-list
-      (append
-       (list
-        (list "ll" "ls -l")
-        (list "la" "ls -a")
-	(list "c" "cd $wd")
-        (list "cat" "catenate $1 > /dev/null"))))
-
-;;helmを使用する
-(add-hook 'eshell-mode-hook
-          #'(lambda ()
-              (define-key eshell-mode-map
-                (kbd "M-p")
-                'helm-eshell-history)))
-(add-hook 'eshell-mode-hook
-          #'(lambda ()
-              (define-key eshell-mode-map
-                (kbd "M-n")
-                'helm-esh-pcomplete)))
-
-;;shell-pop
-(use-package shell-pop
-  :config
-  (custom-set-variables
-   '(shell-pop-shell-type (quote ("eshell" "*eshell*"
-				  (lambda nil (eshell shell-pop-term-shell)))))
-   '(shell-pop-term-shell "/usr/bin/zsh")
-   '(shell-pop-universal-key "C-$") ;C-$でshellの出し入れ
-   '(shell-pop-window-height 75)
-   '(shell-pop-full-span t)
-   '(shell-pop-window-position "top")))
-
-;;mozc
-(use-package mozc-im
-  :config
-  (setq default-input-method "japanese-mozc-im")
-  ;; mozc-cursor-color を利用するための対策
-  (make-variable-buffer-local 'mozc-im-mode)
-  (add-hook 'mozc-im-activate-hook (lambda () (setq mozc-im-mode t)))
-  (add-hook 'mozc-im-deactivate-hook (lambda () (setq mozc-im-mode nil)))
-  (advice-add 'mozc-cursor-color-update
-	      :around (lambda (orig-fun &rest args)
-			(let ((mozc-mode mozc-im-mode))
-			  (apply orig-fun args))))
-
-  ;; helm でミニバッファの入力時に IME の状態を継承しない
-  (setq helm-inherit-input-method nil)
-
   ;; helm の検索パターンを mozc を使って入力する場合、入力中は helm の候補の更新を停止する
   (advice-add 'mozc-candidate-dispatch
-	      :before (lambda (&rest args)
-			(when helm-alive-p
-			  (cl-case (nth 0 args)
-			    ('update
-			     (unless helm-suspend-update-flag
-			       (helm-kill-async-processes)
-			       (setq helm-pattern "")
-			       (setq helm-suspend-update-flag t)))
-			    ('clean-up
-			     (when helm-suspend-update-flag
-			       (setq helm-suspend-update-flag nil)))))))
+              :before (lambda (&rest args)
+                        (when helm-alive-p
+                          (cl-case (nth 0 args)
+                            ('update
+                             (unless helm-suspend-update-flag
+                               (helm-kill-async-processes)
+                               (setq helm-pattern "")
+                               (setq helm-suspend-update-flag t)))
+                            ('clean-up
+                             (when helm-suspend-update-flag
+                               (setq helm-suspend-update-flag nil)))))))
 
-  ;; helm で候補のアクションを表示する際に IME を OFF にする
-  (advice-add 'helm-select-action
-	      :before (lambda (&rest args)
-			(deactivate-input-method)))
-  (global-set-key (kbd "C-o") 'toggle-input-method))
+  ;;helm で候補のアクションを表示する際に IME を OFF にする
+  (advice-add 'helm-select-action :before (lambda (&rest args)
+                                            (deactivate-input-method)))
 
-(use-package mozc-popup
-  :config
-  ;; popupスタイル を使用する
-  (setq mozc-candidate-style 'popup))
+  (define-key helm-map (kbd "C-o") 'toggle-input-method)
+  (leaf mozc-popup
+    :ensure t
+    :require t)
 
-(add-to-list 'load-path "~/.emacs.d/mozc-el-extensions")
-(use-package mozc-cursor-color
-  :config
-  ;; カーソルカラーを設定する
-  (setq mozc-cursor-color-alist '((direct        . "green")
-				  (read-only     . "red")
-				  (hiragana      . "blue")
-				  (full-katakana . "firebrick")
-				  (half-ascii    . "dark goldenrod")
-				  (full-ascii    . "orchid")
-				  (half-katakana . "gold")))
+  (leaf mozc-cursor-color
+    :el-get iRi-E/mozc-el-extensions
+    :ensure t
+    :require t
+    :custom
+    ;;カーソルカラーを設定する
+    (mozc-cursor-color-alist . '((direct        . "black")
+                                 (read-only     . "red")
+                                 (hiragana      . "#00b5b5")
+                                 (full-katakana . "firebrick")
+                                 (half-ascii    . "dark goldenrod")
+                                 (full-ascii    . "orchid")
+                                 (half-katakana . "gold"))))
+  :custom
+  (default-input-method . "japanese-mozc")
+  (helm-inherit-input-method . nil) ;helm でミニバッファの入力時に IME の状態を継承しない
 
-  ;; カーソルの点滅を OFF にする
-  (blink-cursor-mode 0))
+  :bind
+  (("C-o" . toggle-input-method))
+  )
 
-(defadvice cua-sequence-rectangle (around my-cua-sequence-rectangle activate)
-  "連番を挿入するとき、紫のところの文字を上書きしないで左にずらす"
-  (interactive
-   (list (if current-prefix-arg
-             (prefix-numeric-value current-prefix-arg)
-           (string-to-number
-            (read-string "Start value: (0) " nil nil "0")))
-         (string-to-number
-          (read-string "Increment: (1) " nil nil "1"))
-         (read-string (concat "Format: (" cua--rectangle-seq-format ") "))))
-  (if (= (length format) 0)
-      (setq format cua--rectangle-seq-format)
-    (setq cua--rectangle-seq-format format))
-  (cua--rectangle-operation 'clear nil t 1 nil
-     '(lambda (s e l r)
-         (kill-region s e)
-         (insert (format format first))
-         (yank)
-         (setq first (+ first incr)))))
+(leaf tramp
+  :setq
+  (tramp-default-method . "ssh"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;;====================================================================================
+;; custom-set-variables
+;;====================================================================================
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default))
+ '(package-selected-packages
+   '(ace-window neotree projectile company yasnippet ccls lsp-mode helm-config smart-mode-line mozc-cursor-color yasnippet-snippets window-numbering visual-regexp-steroids uuidgen use-package undo-tree total-lines tabbar smartparens shell-pop rustic restart-emacs rainbow-mode rainbow-delimiters racer px multi-compile mozc-popup mozc-im migemo markdown-preview-mode magit lsp-ui leaf-keywords image-dired+ image+ hydra hlinum helm-xref helm-swoop helm-descbinds helm-company helm-c-yasnippet flycheck-rust el-get dired-toggle ctags-update company-lsp company-irony clang-format blackout avy ace-isearch)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(aw-leading-char-face ((t (:height 5.0 :foreground "red"))) nil "Customized with leaf in ace-window block"))
