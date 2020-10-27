@@ -413,13 +413,28 @@
 
 (leaf lsp-mode
   :ensure t
+  :init
+  (lsp)
   :setq
   (lsp-eldoc-render-all . t)
   (lsp-enable-indentation . nil)
   (lsp-prefer-capf . t)
   :config
+  (lsp-register-client
+   (make-lsp-client
+    :new-connection (lsp-tramp-connection (executable-find "pyls"))
+    :major-modes '(python-mode)
+    :remote? t
+    :server-id 'pyls-remote))
+  (lsp-register-client
+   (make-lsp-client
+    :new-connection (lsp-tramp-connection (executable-find "clangd-10"))
+    :major-modes '(c-mode c++-mode)
+    :remote? t
+    :server-id 'clangd-remote))
   (add-hook 'c++-mode-hook #'lsp)
-  (add-hook 'c-mode-hook #'lsp))
+  (add-hook 'c-mode-hook #'lsp)
+  (add-hook 'python-mode-hook #'lsp))
 
 (leaf lsp-ui
   :ensure t
@@ -457,12 +472,6 @@
   (lsp-ui-doc-position . 'at-point)
   (lsp-ui-doc-delay . 0.2)
   :hook lsp-mode)
-
-(leaf ccls
-  :ensure t
-  :hook c-mode c++-mode
-  :custom
-  (ccls-executable . "/usr/local/bin/ccls"))
 
 (leaf projectile
   :ensure t
@@ -757,7 +766,7 @@
  '(custom-safe-themes
    '("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default))
  '(package-selected-packages
-   '(ace-window neotree projectile company yasnippet ccls lsp-mode helm-config smart-mode-line mozc-cursor-color yasnippet-snippets window-numbering visual-regexp-steroids uuidgen use-package undo-tree total-lines tabbar smartparens shell-pop rustic restart-emacs rainbow-mode rainbow-delimiters racer px multi-compile mozc-popup mozc-im migemo markdown-preview-mode magit lsp-ui leaf-keywords image-dired+ image+ hydra hlinum helm-xref helm-swoop helm-descbinds helm-company helm-c-yasnippet flycheck-rust el-get dired-toggle ctags-update company-lsp company-irony clang-format blackout avy ace-isearch)))
+   '(ace-window neotree projectile company yasnippet lsp-mode helm-config smart-mode-line mozc-cursor-color yasnippet-snippets window-numbering visual-regexp-steroids uuidgen use-package undo-tree total-lines tabbar smartparens shell-pop rustic restart-emacs rainbow-mode rainbow-delimiters racer px multi-compile mozc-popup mozc-im migemo markdown-preview-mode magit lsp-ui leaf-keywords image-dired+ image+ hydra hlinum helm-xref helm-swoop helm-descbinds helm-company helm-c-yasnippet flycheck-rust el-get dired-toggle ctags-update company-lsp company-irony clang-format blackout avy ace-isearch)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
