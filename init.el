@@ -250,12 +250,9 @@
   :config
   (define-key global-map (kbd "C-@") 'vr/query-replace))
 
-(leaf helm-config
+(leaf helm
   :ensure t
   :init
-  (leaf helm
-    :ensure t
-    :require t)
   (leaf helm-smex
     :ensure t
     :require t)
@@ -671,7 +668,8 @@
 
 (leaf mozc
   :ensure t
-  :after
+  :el-get iRi-E/mozc-el-extensions
+  :after helm
   :config
   ;; helm の検索パターンを mozc を使って入力する場合、入力中は helm の候補の更新を停止する
   (advice-add 'mozc-candidate-dispatch
@@ -690,29 +688,23 @@
   ;;helm で候補のアクションを表示する際に IME を OFF にする
   (advice-add 'helm-select-action :before (lambda (&rest args)
                                             (deactivate-input-method)))
-
   (define-key helm-map (kbd "C-o") 'toggle-input-method)
   (leaf mozc-popup
     :ensure t
     :require t)
-
   (leaf mozc-cursor-color
-    :el-get iRi-E/mozc-el-extensions
-    :ensure t
-    :require t
-    :custom
-    ;;カーソルカラーを設定する
-    (mozc-cursor-color-alist . '((direct        . "black")
-                                 (read-only     . "red")
-                                 (hiragana      . "#00b5b5")
-                                 (full-katakana . "firebrick")
-                                 (half-ascii    . "dark goldenrod")
-                                 (full-ascii    . "orchid")
-                                 (half-katakana . "gold"))))
+    :require t)
   :custom
   (default-input-method . "japanese-mozc")
   (helm-inherit-input-method . nil) ;helm でミニバッファの入力時に IME の状態を継承しない
-
+  ;;カーソルカラーを設定する
+  (mozc-cursor-color-alist . '((direct        . "black")
+                               (read-only     . "red")
+                               (hiragana      . "#00b5b5")
+                               (full-katakana . "firebrick")
+                               (half-ascii    . "dark goldenrod")
+                               (full-ascii    . "orchid")
+                               (half-katakana . "gold")))
   :bind
   (("C-o" . toggle-input-method))
   )
@@ -720,56 +712,3 @@
 (leaf tramp
   :setq
   (tramp-default-method . "ssh"))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-;;====================================================================================
-;; custom-set-variables
-;;====================================================================================
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default))
- '(package-selected-packages
-   '(ace-window neotree projectile company yasnippet lsp-mode helm-config smart-mode-line mozc-cursor-color yasnippet-snippets window-numbering visual-regexp-steroids uuidgen use-package undo-tree total-lines tabbar smartparens shell-pop rustic restart-emacs rainbow-mode rainbow-delimiters racer px multi-compile mozc-popup mozc-im migemo markdown-preview-mode magit lsp-ui leaf-keywords image-dired+ image+ hydra hlinum helm-xref helm-swoop helm-descbinds helm-company helm-c-yasnippet flycheck-rust el-get dired-toggle ctags-update company-lsp company-irony clang-format blackout avy ace-isearch)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(aw-leading-char-face ((t (:height 5.0 :foreground "red"))) nil "Customized with leaf in ace-window block"))
