@@ -1,0 +1,11 @@
+/elpa/
+/el-get/
+/eshell/
+/auto-save-list/
+/snippets/
+/transient/
+projectile-bookmarks.eld
+recentf
+smex-items
+tramp
+.lsp-session-*
