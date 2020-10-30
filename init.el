@@ -458,12 +458,12 @@
   (lsp-ui-peek-list-width . 30)
   (lsp-ui-peek-fontify . 'always)
   (lsp-ui-flycheck-enable . t)
-  (lsp-ui-sideline-enable . t)
-  (lsp-ui-sideline-ignore-duplicate . t)
-  (lsp-ui-sideline-show-symbol  . t)
-  (lsp-ui-sideline-show-hover . t)
-  (lsp-ui-sideline-show-diagnostics . t)
-  (lsp-ui-sideline-show-code-actions . t)
+  ;; (lsp-ui-sideline-enable . t)
+  ;; (lsp-ui-sideline-ignore-duplicate . t)
+  ;; (lsp-ui-sideline-show-symbol  . t)
+  ;; (lsp-ui-sideline-show-hover . t)
+  ;; (lsp-ui-sideline-show-diagnostics . t)
+  ;; (lsp-ui-sideline-show-code-actions . t)
   (lsp-ui-imenu-enable . t)
   (lsp-ui-imenu-kind-position . 'top)
   (lsp-ui-doc-position . 'at-point)
@@ -666,6 +666,9 @@
                                   (lambda nil (eshell shell-pop-term-shell)))))
   )
 
+(leaf cmake-mode
+  :ensure t)
+
 (leaf mozc
   :ensure t
   :el-get iRi-E/mozc-el-extensions
@@ -712,3 +715,57 @@
 (leaf tramp
   :setq
   (tramp-default-method . "ssh"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;;====================================================================================
+;; custom-set-variables
+;;====================================================================================
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(cmake-mode yasnippet-snippets visual-regexp-steroids undo-tree total-lines smart-mode-line shell-pop restart-emacs rainbow-mode rainbow-delimiters projectile neotree mozc-popup migemo magit lsp-ui leaf-keywords hydra helm-swoop helm-smex helm-c-yasnippet flycheck el-get company blackout ace-window)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(aw-leading-char-face ((t (:height 5.0 :foreground "red"))) nil "Customized with leaf in ace-window block"))
