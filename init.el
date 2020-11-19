@@ -173,15 +173,22 @@
 (leaf font-setting
   :config
   ;;http://extra-vision.blogspot.com/2016/07/emacs.html
-  (create-fontset-from-ascii-font
-   "Ricty Diminished-16:weight=normal:slant=normal"
-   nil
-   "Ricty_Diminished")
+  (if (eq system-type 'windows-nt)
+      (create-fontset-from-ascii-font
+       "Ricty Diminished-14:weight=normal:slant=normal"
+       nil
+       "Ricty_Diminished")
+    (create-fontset-from-ascii-font
+     "Ricty Diminished-16:weight=normal:slant=normal"
+     nil
+     "Ricty_Diminished"))
 
   (set-fontset-font
    "fontset-Ricty_Diminished"
    'unicode
-   "Ricty Diminished-16:weight=normal:slant=normal"
+   (if (eq system-type 'windows-nt)
+       "Ricty Diminished-14:weight=normal:slant=normal"
+     "Ricty Diminished-16:weight=normal:slant=normal")
    nil
    'append)
 
@@ -212,7 +219,8 @@
                       :foreground "red"
                       :background nil
                       :weight 'ultra-bold)
-
+  (when (eq system-type 'windows-nt)
+    (set-frame-parameter nil 'fullscreen 'maximized))
   :setq `((show-paren-delay . 0) ;括弧のハイライトまでの遅延
           (show-paren-style . 'expression) ;括弧内を強調
           ))
@@ -713,8 +721,11 @@
   )
 
 (leaf tramp
-  :setq
-  (tramp-default-method . "ssh"))
+  :config
+  (if (eq system-type 'windows-nt)
+      (setq tramp-default-method "plink")
+    (setq tramp-default-method "ssh")))
+
 
 
 
