@@ -154,6 +154,7 @@
   ("C-+" . text-scale-increase-1)
   ("C--" . text-scale-decrease-1))
 
+(add-hook 'python-mode-hook (lambda () (define-key python-mode-map (kbd "C-c C-c") 'comment-region)))
 (define-key key-translation-map (kbd "C-h") (kbd "<DEL>")) ;minibufferにも反映させる
 (define-key lisp-interaction-mode-map (kbd "C-j") 'newline-and-indent)
 (define-key lisp-interaction-mode-map (kbd "C-m") 'eval-print-last-sexp)
@@ -608,7 +609,6 @@
 (leaf eshell-mode
   :after helm
   :setq-default
-  (eshell-path-env . '(getenv "PATH")) ;pathの設定
   (eshell-prompt-function . 'eshell-pronpt-func) ;prompt
   (eshell-prompt-regexp . "^[^#$]*[#$] ") ;promptの先頭
   (eshell-command-aliases-list .
@@ -620,6 +620,7 @@
                                   (list "cat" "catenate $1 > /dev/null"))))
 
   :config
+  (setq eshell-path-env (getenv "PATH")) ;pathの設定
   (add-hook 'eshell-mode-hook
             (lambda ()
               (progn
