@@ -130,6 +130,7 @@
               (if (string= "*scratch*" (buffer-name))
                   (progn (my-make-scratch 0) nil)
                 t)))
+  (add-to-list 'load-path "~/.emacs.d/lsp/")
   :setq-default
   `((ring-bell-function . 'ignore) ;ビープ音を無効
     (backup-inhibited . t) ;バックアップファイルを作らない
@@ -426,21 +427,7 @@
   (lsp-enable-indentation . nil)
   (lsp-prefer-capf . t)
   :config
-  (lsp-register-client
-   (make-lsp-client
-    :new-connection (lsp-tramp-connection (executable-find "pyls"))
-    :major-modes '(python-mode)
-    :remote? t
-    :server-id 'pyls-remote))
-  (lsp-register-client
-   (make-lsp-client
-    :new-connection (lsp-tramp-connection (executable-find "clangd-10"))
-    :major-modes '(c-mode c++-mode)
-    :remote? t
-    :server-id 'clangd-remote))
-  (add-hook 'c++-mode-hook #'lsp)
-  (add-hook 'c-mode-hook #'lsp)
-  (add-hook 'python-mode-hook #'lsp))
+  (load "lsp-register-client" t))
 
 (leaf lsp-ui
   :ensure t
